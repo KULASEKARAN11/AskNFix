@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="images/Logo.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - Red Building First Floor</title>
+    <link rel="stylesheet" href="redfirstfloor.css">
+    <style>
+        /* Ensure buttons section handles dynamic content well */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            column-gap: 20px;
+            row-gap: 35px; /* Vertical gap */
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            padding-top: 90px;
+            box-sizing: border-box;
+            justify-items: center;
+        }
+        @media (max-width: 768px) {
+            .buttons {
+                grid-template-columns: repeat(3, 1fr); /* 3 columns mobile */
+                column-gap: 15px;
+                row-gap: 25px;
+                padding: 15px;
+                padding-top: 70px;
+                max-width: 95%;
+            }
+        }
+        .loading-message {
+            text-align: center;
+            padding: 30px;
+            font-style: italic;
+            color: #888; /* Adjust color as needed */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">RED BUILDING FIRST FLOOR</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage.html" class="hreff">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a onclick="logout()" href="#">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <section class="buttons" id="roomButtonsContainer">
+        <p class="loading-message">Loading rooms...</p>
+    </section>
+
+    <footer>
+        <p >Contact us: support@asknfix.com | Phone: +123 456 7890<br><hr>
+            AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+        const user1 = JSON.parse(localStorage.getItem("user"));
+        //alert(user1 ? user1.residing_status : "User data not found");
+        document.querySelector(".hreff").addEventListener("click", function() {
+            if(user1.residing_status==="Hosteller")
+            window.location.href = "Homepage.html";
+        else
+            window.location.href = "Homepage1.html";
+        });
+
+        async function fetchAndDisplayRooms() {
+            const container = document.getElementById('roomButtonsContainer');
+            if (!container) {
+                console.error('Room button container (#roomButtonsContainer) not found!');
+                return;
+            }
+            container.innerHTML = '<p class="loading-message">Loading rooms...</p>';
+
+            try {
+                const response = await fetch('/api/rooms/red/firstfloor'); // Changed fetch URL to the first floor endpoint
+
+                if (!response.ok) {
+                    let errorMsg = `Failed to load rooms. Status: ${response.status}`;
+                    try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch(e){}
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+
+                if (!result.success || !Array.isArray(result.rooms)) {
+                    throw new Error(result.message || 'Invalid data format received from server.');
+                }
+
+                container.innerHTML = ''; // Clear loading message
+
+                if (result.rooms.length === 0) {
+                    container.innerHTML = '<p class="loading-message">No rooms found for Red Building - First Floor.</p>';
+                    return;
+                }
+
+                result.rooms.forEach(room => {
+                    const button = document.createElement('button');
+                    button.classList.add('large-btn', 'room'); // Keep the 'room' class for styling
+                    button.textContent = room.roomno;
+
+                    button.addEventListener('click', () => {
+                        localStorage.setItem("redroomno", room.roomno);
+                        window.location.href = 'redquery.html'; // Navigate on button click
+                    });
+
+                    container.appendChild(button);
+                });
+
+            } catch (error) {
+                console.error('Error fetching or displaying rooms:', error);
+                container.innerHTML = `<p class="loading-message" style="color: red;">Error loading rooms: ${error.message}. Please check connection or contact support.</p>`;
+            }
+        }
+
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message);
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout.');
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchAndDisplayRooms);
+    </script>
+
+</body>
+</html>

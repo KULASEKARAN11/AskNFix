@@ -1,0 +1,109 @@
+/* completedqueriesstaff.css */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6; /* Light background */
+    color: #333;
+}
+
+/* Inherit header styles from styles.css or add specific overrides if needed */
+
+main {
+    padding: 20px;
+    max-width: 1200px; /* Limit content width */
+    margin: 20px auto; /* Center the main content */
+    background-color: #fff; /* White background for the main content area */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    border-radius: 8px; /* Rounded corners */
+}
+
+.container {
+    padding: 20px;
+}
+
+h1 {
+    color: #0056b3; /* Theme color for heading */
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #ccc;
+    margin-bottom: 20px;
+}
+
+.user-info {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    color: #555;
+}
+
+.user-info strong {
+    color: #0056b3;
+}
+
+.queries-table-container {
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+}
+
+#completed-queries-table {
+    width: 100%;
+    border-collapse: collapse; /* Remove spacing between borders */
+    margin-top: 20px;
+    font-size: 0.9em; /* Slightly smaller font for table */
+}
+
+#completed-queries-table th,
+#completed-queries-table td {
+    border: 1px solid #ddd; /* Light grey border */
+    padding: 10px 12px; /* Padding within cells */
+    text-align: left; /* Align text to the left */
+    vertical-align: middle; /* Center text vertically */
+}
+
+#completed-queries-table th {
+    background-color: #007bff; /* Blue background for headers */
+    color: white; /* White text for headers */
+    font-weight: 600; /* Bolder header text */
+    position: sticky; /* Make header sticky if container scrolls */
+    top: 0; /* Stick to the top */
+}
+
+#completed-queries-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Zebra striping for rows */
+}
+
+#completed-queries-table tbody tr:hover {
+    background-color: #f1f1f1; /* Highlight row on hover */
+}
+
+#completed-queries-table td {
+    color: #333; /* Dark text for data cells */
+}
+
+#completed-queries-table td[colspan="9"] {
+    text-align: center; /* Center 'Loading' or 'No queries' message */
+    font-style: italic;
+    color: #777;
+    padding: 20px;
+}
+
+/* Inherit footer styles from styles.css or add specific overrides */
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    #completed-queries-table th,
+    #completed-queries-table td {
+        padding: 8px;
+        font-size: 0.85em;
+    }
+}

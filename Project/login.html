@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - Student Login</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="styles.css"> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Styles for positioning input elements */
+        .input-group {
+            position: relative; /* Needed for absolute positioning of the icon */
+            margin-bottom: 15px;
+        }
+
+        /* Styles for the password toggle icon */
+        .password-toggle-icon {
+            position: absolute;
+            right: 10px;  /* Adjust as needed */
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            width: 20px;  /* Adjust size as needed */
+            height: auto; /* Maintain aspect ratio */
+            /* Optional: Add padding if icon feels too close to edge or text */
+             padding: 2px;
+        }
+
+        /* Original hover style for Staff button */
+        #staffbtn:hover {
+            background-color: #83c56f;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="login-box">
+            <div id="n1">
+                <div class="logo"><span style="font-weight: 600;">AskNFix</span></div>
+            </div>
+
+            <h2>Student Login</h2>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="number" id="rollno" placeholder="Roll Number" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                    <img src="images/closeeye.webp" alt="Show/Hide password" class="password-toggle-icon" id="togglePasswordIcon">
+                </div>
+
+                <button type="submit">Login</button>
+            </form>
+            <a href="stafflogin.html"><button id="staffbtn">Staff Login</button></a>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+        // Ensure both elements exist before adding listener
+        if (passwordInput && togglePasswordIcon) {
+            togglePasswordIcon.addEventListener('click', function() {
+                // Check the current type of the password field
+                const currentType = passwordInput.getAttribute('type');
+
+                // Toggle the type attribute between 'password' and 'text'
+                if (currentType === 'password') {
+                    passwordInput.setAttribute('type', 'text');
+                    // Change icon to open eye (password visible)
+                    this.src = 'images/openeye.webp';
+                     this.alt = 'Hide password'; // Update alt text
+                } else {
+                    passwordInput.setAttribute('type', 'password');
+                    // Change icon to closed eye (password hidden)
+                    this.src = 'images/closeeye.webp';
+                     this.alt = 'Show password'; // Update alt text
+                }
+            });
+        } else {
+            console.error("Password input or toggle icon not found. Check IDs 'password' and 'togglePasswordIcon'.");
+        }
+
+    </script>
+</body>
+</html>

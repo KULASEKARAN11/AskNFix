@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Pending Queries - AskNFix</title> <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="view_queries.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="staff_dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com"
+                       target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+
+
+            <h1>Pending Queries</h1>
+
+            <div id="queries-container">
+                <p class="loading-message">Loading queries...</p>
+            </div>
+
+            <div class="clear"></div>
+        </div>
+
+        <div id="description-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Enter Completion Description</h2> <textarea id="description-text" rows="4" cols="50" placeholder="Describe the action taken to resolve the query..."></textarea>
+                <button id="modal-mark-done-button">Mark as Done</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <p>AskNFix &copy; 2025</p>
+    </footer>
+
+    <script>
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        // Function to handle staff logout
+        async function handleLogout() {
+            console.log("handleLogout called from view_queries");
+            try {
+                const response = await fetch('/logout', { // Assuming /logout endpoint exists
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send cookies if needed
+                });
+
+                // Check if logout on server was likely successful OR if response indicates an issue but client should still log out
+                if (response.ok) {
+                     const result = await response.json().catch(() => ({})); // Catch errors if response is not JSON
+                     if (result.success) {
+                        console.log("Server logout successful.");
+                     } else {
+                        console.warn("Server logout response indicates issue:", result.message || 'No message');
+                     }
+                } else {
+                     console.warn(`Logout request failed with status: ${response.status}`);
+                }
+
+                 // Clear any local storage/session storage for the user
+                 localStorage.removeItem('user'); // Example if you store user info locally
+                 sessionStorage.clear();
+
+                 window.location.href = '/stafflogin.html'; // Redirect to staff login
+
+            } catch (error) {
+                console.error('Error during logout fetch operation:', error);
+                 // Clear storage even if fetch fails
+                 localStorage.removeItem('user');
+                 sessionStorage.clear();
+                 alert('An error occurred during logout. Redirecting to login.');
+                 window.location.href = '/stafflogin.html';
+            }
+        }
+
+        // --- Query Fetching and Display Logic ---
+
+        const queriesContainer = document.getElementById('queries-container');
+
+        // Function to fetch queries relevant to the logged-in staff
+        async function fetchQueries() {
+            if (!queriesContainer) return; // Safety check
+            queriesContainer.innerHTML = '<p class="loading-message">Loading queries...</p>';
+
+            try {
+                const response = await fetch('/api/queries', { // Fetch queries for staff
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send session cookie
+                });
+
+                if (response.status === 401) {
+                     console.warn("Unauthorized fetch attempt for /api/queries. Redirecting to login.");
+                     alert("Session expired or unauthorized. Please log in again.");
+                     window.location.href = '/stafflogin.html';
+                     return;
+                }
+
+                if (!response.ok) {
+                    let errorMsg = `Error fetching queries (${response.status})`;
+                    try {
+                        const errData = await response.json();
+                        errorMsg = errData.message || errorMsg;
+                    } catch (e) { /* Ignore if response body isn't JSON */ }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || 'API reported failure fetching queries.');
+                }
+
+                // Check if queries array exists and has items
+                if (!Array.isArray(result.queries) || result.queries.length === 0) {
+                    queriesContainer.innerHTML = '<p class="loading-message">No pending queries found assigned to you.</p>';
+                    return;
+                }
+
+                // Clear loading message and render queries
+                queriesContainer.innerHTML = '';
+                result.queries.forEach(query => {
+                    // --- Create and append the query element ---
+                    const queryElement = createQueryElement(query);
+                    queriesContainer.appendChild(queryElement);
+                });
+
+            } catch (error) {
+                console.error('Failed to fetch or display queries:', error);
+                queriesContainer.innerHTML = `<p class="loading-message error-message">Error loading queries: ${error.message}. Please try refreshing.</p>`;
+            }
+        }
+
+        // Function to create HTML element for a single query
+        function createQueryElement(query) {
+            const div = document.createElement('div');
+            div.className = 'query-item';
+            // Use query.queryId which is now correctly named from the backend map
+            div.setAttribute('data-query-id', query.queryId);
+
+            // Format appliances array
+            let appliancesStr = 'None specified'; // Default
+            if (Array.isArray(query.appliances) && query.appliances.length > 0) {
+                 appliancesStr = query.appliances.map(app => {
+                    return `${app.name || 'N/A'} (${app.count !== undefined ? app.count : 'N/A'})`;
+                 }).join(', ');
+            }
+
+
+            // --- Format Date and Time ---
+            const raisedDateStr = query.raised_date; // Accessing the new field
+            const raisedTimeStr = query.raised_time; // Accessing the new field
+
+            let formattedDate = 'N/A';
+            if (raisedDateStr) {
+                try {
+                    formattedDate = new Date(raisedDateStr).toLocaleDateString(undefined, {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+                } catch (e) {
+                     console.warn("Could not format date:", raisedDateStr, e);
+                     formattedDate = raisedDateStr; // Fallback
+                }
+            }
+
+            // Assuming raisedTimeStr is like 'HH:MM:SS'
+            const formattedTime = raisedTimeStr ? raisedTimeStr.substring(0, 5) : 'N/A'; // Extract HH:MM
+
+
+            // --- Construct Inner HTML ---
+            div.innerHTML = `
+                <h3>Query ID: ${query.queryId || 'N/A'}</h3>
+                <p><strong>Room:</strong> ${query.roomNo || 'N/A'}</p>
+                <p><strong>Reported by (Roll No):</strong> ${query.reportedBy || 'N/A'}</p>
+                <p><strong>Description:</strong> ${query.description || 'No description'}</p>
+                <p><strong>Appliances:</strong> ${appliancesStr}</p>
+                <p><strong>Raised Date:</strong> ${formattedDate}</p> <p><strong>Raised Time:</strong> ${formattedTime}</p> <p><strong>Status:</strong> <span class="status-${(query.status || 'unknown').replace(' ', '-')}">${query.status || 'N/A'}</span></p> <button class="mark-done-button" data-query-id="${query.queryId}">Mark as Done</button>
+            `;
+
+            // Add event listener to the "Mark as Done" button
+            const markDoneButton = div.querySelector('.mark-done-button');
+            if (markDoneButton) {
+                markDoneButton.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent triggering other events if nested
+                    const button = event.target;
+                    button.disabled = true;
+                    button.textContent = 'Processing...';
+                    // Pass queryId and the button itself to the handler
+                    handleMarkAsDone(query.queryId, button);
+                });
+            } else {
+                console.error(`Could not find mark-done-button for query ${query.queryId}`);
+            }
+
+            return div;
+        }
+
+        // Function to handle marking a query as done (opens modal)
+        function handleMarkAsDone(queryId, buttonElement) { // Changed to regular function declaration
+            console.log(`Modal requested for marking query ${queryId} as done.`);
+
+            const modal = document.getElementById("description-modal");
+            const closeBtn = modal.querySelector(".close"); // Use querySelector for specificity
+            const modalMarkDoneButton = document.getElementById("modal-mark-done-button");
+            const descriptionText = document.getElementById("description-text");
+
+            // Clear previous description and set current query ID reference
+            descriptionText.value = '';
+            modal.setAttribute('data-current-query-id', queryId); // Store ID on modal
+
+            // Open the modal
+            modal.style.display = "block";
+
+            // Detach previous handlers before attaching new ones to prevent multiple triggers
+            const newModalMarkDoneButton = modalMarkDoneButton.cloneNode(true);
+            modalMarkDoneButton.parentNode.replaceChild(newModalMarkDoneButton, modalMarkDoneButton);
+
+
+            // --- Event Handlers for Modal ---
+
+            // Close button action
+            const closeModalHandler = () => {
+                 modal.style.display = "none";
+                 buttonElement.disabled = false; // Re-enable the original button
+                 buttonElement.textContent = 'Mark as Done';
+                 // Remove window click listener when modal closes
+                 window.removeEventListener('click', outsideClickHandler);
+            };
+            closeBtn.onclick = closeModalHandler; // Use direct assignment
+
+
+            // Window click action (close if click outside modal content)
+            const outsideClickHandler = (event) => {
+                if (event.target == modal) {
+                   closeModalHandler();
+                }
+            };
+             // Use add/remove event listener for window click
+            window.addEventListener('click', outsideClickHandler);
+
+
+            // "Mark as Done" button inside the modal action
+             newModalMarkDoneButton.onclick = async () => { // Assign onclick to the new button
+                 const currentQueryId = modal.getAttribute('data-current-query-id'); // Get ID from modal attribute
+                 const description = descriptionText.value.trim();
+
+                 if (description === "") {
+                     alert("Completion description cannot be empty.");
+                     return; // Prevent submission
+                 }
+
+                 // Disable the modal's button and show loading state
+                 newModalMarkDoneButton.disabled = true;
+                 newModalMarkDoneButton.textContent = 'Processing...';
+
+                 try {
+                     console.log(`Submitting completion for query ${currentQueryId}`);
+                     const response = await fetch(`/api/queries/${currentQueryId}/complete`, {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json'
+                         },
+                          credentials: 'include', // Include session cookie
+                         body: JSON.stringify({ description: description })
+                     });
+
+                     // Always re-enable modal button after fetch attempt (in finally block)
+
+                     if (!response.ok) {
+                         // Handle HTTP errors specifically
+                         let errorMsg = `Failed to update. Status: ${response.status}`;
+                         try {
+                             const errData = await response.json();
+                             errorMsg = `${errorMsg} - ${errData.message || 'Server did not provide details.'}`;
+                         } catch (e) { /* Response might not be JSON */ }
+                         throw new Error(errorMsg);
+                     }
+
+                     const result = await response.json();
+
+                     if (result.success) {
+                         console.log(`Query ${currentQueryId} successfully marked as done.`);
+                         alert(`Query ${currentQueryId} marked as done.`); // Give user feedback
+
+                         closeModalHandler(); // Close the modal programmatically
+
+                         // Remove the query item from the UI smoothly
+                         const queryItemElement = document.querySelector(`.query-item[data-query-id="${currentQueryId}"]`);
+                         if (queryItemElement) {
+                             queryItemElement.style.opacity = '0'; // Fade out
+                             queryItemElement.style.transition = 'opacity 0.5s ease-out, max-height 0.5s ease-out';
+                             queryItemElement.style.maxHeight = '0'; // Collapse height
+                              queryItemElement.style.padding = '0';
+                              queryItemElement.style.margin = '0';
+                              queryItemElement.style.border = 'none';
+
+
+                             setTimeout(() => {
+                                 queryItemElement.remove();
+                                 // Check if container is now empty
+                                 if (queriesContainer && queriesContainer.children.length === 0) {
+                                     queriesContainer.innerHTML = '<p class="loading-message">No pending queries found.</p>';
+                                 }
+                             }, 500); // Wait for transition
+                         } else {
+                             // Fallback if element somehow not found: Refresh the whole list
+                             fetchQueries();
+                         }
+                     } else {
+                         // Handle API reporting failure (e.g., { success: false, message: '...' })
+                         throw new Error(result.message || 'API reported failure but status was OK.');
+                     }
+
+                 } catch (error) {
+                     console.error(`Error marking query ${currentQueryId} as done:`, error);
+                     // Display more specific error from server if available
+                     alert(`Failed to mark query as done: ${error.message}`);
+                     // Re-enable the list item button if modal action fails
+                     buttonElement.disabled = false;
+                     buttonElement.textContent = 'Mark as Done';
+
+                 } finally {
+                     // Ensure modal button is re-enabled and text reset regardless of success/failure
+                     newModalMarkDoneButton.disabled = false;
+                     newModalMarkDoneButton.textContent = 'Mark as Done';
+                 }
+             }; // End of modalMarkDoneButton.onclick
+        } // End of handleMarkAsDone
+
+
+        // --- Initialization ---
+        // Fetch queries when the page DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', fetchQueries);
+
+    </script>
+</body>
+</html>

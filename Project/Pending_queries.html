@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Queries - AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="Pending_queries.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li> </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <div class="pending-queries-container">
+        <h2>Pending Queries</h2>
+        <p>Showing queries you have raised that are still pending.</p> <h3>KP Queries</h3>
+        <ul class="query-list" id="kpQueriesList">
+            <li>Loading KP queries...</li>
+        </ul>
+
+        <h3>Red Building Queries</h3>
+        <ul class="query-list" id="redBuildingQueriesList">
+            <li>Loading Red Building queries...</li>
+        </ul>
+
+        <h3>Hostel Queries</h3>
+        <ul class="query-list" id="hostelQueriesList">
+            <li>Loading Hostel queries...</li>
+        </ul>
+    </div>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <hr>
+        <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+        <p style="margin-top: 10px;">AskNFix &copy; 2025</p> </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+
+        // Simple logout function - adjust if your logout needs specific handling
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { // Assuming /logout endpoint exists
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send cookies if needed for session invalidation
+                });
+                const data = await response.json();
+                if (data.success || !response.ok) { // Check for success or general OK status
+                     // Clear local storage if used
+                     localStorage.removeItem('user');
+                     console.log('Logout successful or server acknowledged.');
+                     window.location.href = 'login.html'; // Redirect to login
+                } else {
+                     console.error('Logout failed on server:', data.message);
+                     alert('Logout failed. Please try again.');
+                }
+            } catch (error) {
+                 console.error('Error during logout fetch:', error);
+                 // Clear local storage anyway? Maybe.
+                 localStorage.removeItem('user');
+                 alert('An error occurred during logout. Redirecting to login.');
+                 window.location.href = 'login.html';
+            }
+        }
+
+
+        // Removed checkLoginStatus as it wasn't fully implemented and might cause issues
+        // Authentication should primarily be handled by the backend protecting the API endpoint
+
+        async function fetchPendingQueries() {
+            // Authentication is handled by the backend using session cookies (credentials: 'include')
+
+            const kpQueriesList = document.getElementById('kpQueriesList');
+            const redBuildingQueriesList = document.getElementById('redBuildingQueriesList');
+            const hostelQueriesList = document.getElementById('hostelQueriesList');
+
+            // Function to set loading/error message
+            const setMessage = (listElement, message) => {
+                listElement.innerHTML = `<li>${message}</li>`;
+            };
+
+            setMessage(kpQueriesList, 'Loading KP queries...');
+            setMessage(redBuildingQueriesList, 'Loading Red Building queries...');
+            setMessage(hostelQueriesList, 'Loading Hostel queries...');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/pending-queries', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Important for sending session cookies
+                });
+
+                if (response.status === 401) { // Handle unauthorized specifically
+                     console.log("Unauthorized access to pending queries. Redirecting to login.");
+                     alert("Your session may have expired. Please log in again.");
+                     window.location.href = 'login.html';
+                     return; // Stop further processing
+                }
+
+
+                if (!response.ok) {
+                    // Handle other errors (like 500 Internal Server Error)
+                    console.error('Failed to fetch pending queries:', response.status, response.statusText);
+                    const errorText = `Error ${response.status}: Could not fetch pending queries.`;
+                    setMessage(kpQueriesList, errorText);
+                    setMessage(redBuildingQueriesList, errorText);
+                    setMessage(hostelQueriesList, errorText);
+                    return;
+                }
+
+                const data = await response.json();
+                console.log("Data received from backend:", data);
+
+                // Clear lists before population
+                kpQueriesList.innerHTML = '';
+                redBuildingQueriesList.innerHTML = '';
+                hostelQueriesList.innerHTML = '';
+
+                if (data && data.success && Array.isArray(data.pendingQueries)) {
+                    console.log("Processing pending queries array:", data.pendingQueries);
+
+                    const kpQueries = [];
+                    const redBuildingQueries = [];
+                    const hostelQueries = [];
+
+                    // Sort queries into respective blocks
+                    data.pendingQueries.forEach(query => {
+                        // Check if room data exists before accessing block_id
+                        const blockId = query.room ? query.room.block_id : null;
+
+                        if (blockId === 4) {
+                            kpQueries.push(query);
+                        } else if (blockId === 3) {
+                            redBuildingQueries.push(query);
+                        } else if (blockId === 1 || blockId === 2 || blockId === null || typeof blockId === 'undefined') {
+                            // Treat block 1, 2, or missing block as Hostel
+                            hostelQueries.push(query);
+                        } else {
+                            // Optional: Handle queries with unexpected block IDs if necessary
+                            console.warn("Query with unexpected block ID:", query);
+                        }
+                    });
+
+                    // --- Function to display queries in a list ---
+                    function displayQueries(queries, listElement) {
+                        if (queries.length > 0) {
+                            queries.forEach(query => {
+                                const listItem = document.createElement('li');
+                                listItem.classList.add('query-item');
+
+                                // Format Appliances
+                                let applianceInfo = '';
+                                if (query.appliances && Array.isArray(query.appliances) && query.appliances.length > 0) {
+                                    applianceInfo = '<br><strong>Faulty Appliances:</strong><ul>';
+                                    query.appliances.forEach(app => {
+                                        // Add check for app.name and app.count existence
+                                        applianceInfo += `<li>${app.name || 'Unknown Appliance'} (Count: ${app.count !== undefined ? app.count : 'N/A'})</li>`;
+                                    });
+                                    applianceInfo += '</ul>';
+                                }
+
+                                // Format Date and Time - Provide defaults if null/undefined
+                                const raisedDateStr = query.raised_date;
+                                const raisedTimeStr = query.raised_time;
+
+                                let formattedDate = 'N/A';
+                                if (raisedDateStr) {
+                                    try {
+                                        // Assuming raisedDateStr is like 'YYYY-MM-DD' or similar Date() can parse
+                                        formattedDate = new Date(raisedDateStr).toLocaleDateString(undefined, { // Use locale default format
+                                            year: 'numeric', month: 'short', day: 'numeric'
+                                        });
+                                    } catch (e) {
+                                        console.warn("Could not format date:", raisedDateStr, e);
+                                        formattedDate = raisedDateStr; // Fallback to original string if formatting fails
+                                    }
+                                }
+
+                                // Assuming raisedTimeStr is like 'HH:MM:SS'
+                                const formattedTime = raisedTimeStr ? raisedTimeStr.substring(0, 5) : 'N/A'; // Extract HH:MM
+
+                                // --- Construct List Item HTML ---
+                                listItem.innerHTML = `
+                                    <strong>Query ID:</strong> ${query.Query_id}<br>
+                                    <strong>Room No:</strong> ${query.room ? query.room.roomno : 'N/A'}<br>
+                                    <strong>Description:</strong> ${query.description || 'No description provided'}<br>
+                                    <strong>Raised Date:</strong> ${formattedDate}<br>
+                                    <strong>Raised Time:</strong> ${formattedTime}<br>
+                                    <strong>Status:</strong> ${query.status || 'N/A'}
+                                    ${applianceInfo}
+                                `;
+                                listElement.appendChild(listItem);
+                            });
+                        } else {
+                            listElement.innerHTML = '<li>No pending queries found for this category.</li>'; // More specific message
+                        }
+                    }
+
+                    // Populate the lists
+                    displayQueries(kpQueries, kpQueriesList);
+                    displayQueries(redBuildingQueries, redBuildingQueriesList);
+                    displayQueries(hostelQueries, hostelQueriesList);
+
+                } else if (data && !data.success) {
+                     console.error("API reported failure:", data.message);
+                     const errorText = `Error: ${data.message || 'Failed to retrieve queries.'}`;
+                     setMessage(kpQueriesList, errorText);
+                     setMessage(redBuildingQueriesList, errorText);
+                     setMessage(hostelQueriesList, errorText);
+                }
+                 else {
+                    // Handle cases where data or data.pendingQueries is missing/invalid
+                    console.error("Invalid data format received:", data);
+                    const errorText = 'Error: Invalid data format received from server.';
+                     setMessage(kpQueriesList, errorText);
+                     setMessage(redBuildingQueriesList, errorText);
+                     setMessage(hostelQueriesList, errorText);
+                }
+
+            } catch (error) {
+                console.error('Error fetching or processing pending queries:', error);
+                const errorText = 'Error: Could not connect or process query data.';
+                 setMessage(kpQueriesList, errorText);
+                 setMessage(redBuildingQueriesList, errorText);
+                 setMessage(hostelQueriesList, errorText);
+            }
+        }
+
+        // Fetch queries when the page loads
+        window.addEventListener('load', fetchPendingQueries);
+
+    </script>
+
+</body>
+</html>

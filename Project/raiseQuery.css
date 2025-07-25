@@ -1,0 +1,155 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    background-image: url("./images/background.png");
+    background-size: 100vw 250vh;
+    min-height: 100vh;
+    background-position: bottom;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    margin-top: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 100%;
+}
+
+#selectedAppliances li {
+    display: grid;
+    grid-template-columns: 1fr;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+}
+
+textarea::placeholder{
+    color: black;
+    opacity: 0.4;
+}
+textarea {
+    width: 100%;
+    max-width: 600px;
+    height: 120px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    color: black;
+    font-size: 16px;
+    border-radius: 6px;
+    resize: vertical;
+    margin-top: 15px;
+}
+
+button.submit-btn {
+    margin-top: 20px;
+    padding: 10px 25px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button.submit-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        background: black;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 150px;
+        padding: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .hamburger {
+        display: block;
+    }
+}
+
+button {
+    background-color: #d9a7c7; 
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background-color: #b48aae;
+    transform: scale(1.05);
+}
+
+button:active {
+    background-color: #884888;
+    transform: scale(0.98);
+}

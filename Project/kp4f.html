@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - KP Third Floor</title> <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="kpff.css">
+    <style>
+        /* Simple style for loading message */
+        .loading-message {
+            text-align: center;
+            padding: 30px;
+            font-style: italic;
+            color: #888; /* Adjust color as needed */
+        }
+        /* Ensure buttons section handles dynamic content well (copied from previous) */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5 columns */
+            column-gap: 20px;
+            row-gap: 35px; /* Vertical gap */
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            padding-top: 90px;
+            box-sizing: border-box;
+            justify-items: center;
+        }
+        @media (max-width: 768px) {
+            section.buttons {
+                grid-template-columns: repeat(3, 1fr); /* 3 columns mobile */
+                column-gap: 15px;
+                row-gap: 25px;
+                padding: 15px;
+                padding-top: 70px;
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">KP BUILDING-FOURTH FLOOR</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a class="hreff" href="#">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="logout(event)">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <section class="buttons" id="roomButtonsContainer">
+            <p class="loading-message">Loading rooms...</p>
+    </section>
+
+    <footer>
+        <p >Contact us: support@asknfix.com | Phone: +7397247862<br><hr>
+            AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication</p>
+    </footer>
+
+    <script>
+        // --- Keep existing toggleMenu and logout functions ---
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+
+        function logout(event) {
+            event.preventDefault();
+            console.log("Logout initiated...");
+            fetch('/logout', { method: 'POST', headers: {'Content-Type': 'application/json'} })
+            .then(response => {
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("kproomno");
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message || 'Logout failed.');
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert(`An error occurred during logout: ${error.message}`);
+            });
+        }
+
+        // --- NEW: Function to fetch and display rooms for Fourth Floor (Modified) ---
+        async function fetchAndDisplayRooms() {
+            const container = document.getElementById('roomButtonsContainer');
+            if (!container) {
+                console.error('Room button container (#roomButtonsContainer) not found!');
+                return;
+            }
+            container.innerHTML = '<p class="loading-message">Loading rooms...</p>';
+
+            try {
+                // *** CHANGE: Fetch from the new endpoint for the fourth floor ***
+                const response = await fetch('/api/rooms/kp4f'); // Assuming this endpoint gets floor 4 rooms
+
+                if (!response.ok) {
+                    let errorMsg = `Failed to load rooms. Status: ${response.status}`;
+                    try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch(e){}
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+
+                if (!result.success || !Array.isArray(result.rooms)) {
+                    throw new Error(result.message || 'Invalid data format received from server.');
+                }
+
+                container.innerHTML = ''; // Clear loading message
+
+                if (result.rooms.length === 0) {
+                    container.innerHTML = '<p class="loading-message">No rooms found for KP Building - Fourth Floor.</p>';
+                    return;
+                }
+
+                // Generate buttons for each room
+                result.rooms.forEach((roomno, index) => {
+                    const link = document.createElement('a');
+                    link.href = 'kpquery.html';
+
+                    // Add click listener to fetch appliances and navigate
+                    link.addEventListener('click', async (event) => {
+                        event.preventDefault(); // Prevent default navigation
+
+                        try {
+                            const applianceResponse = await fetch(`/getKpAppliances/${roomno}`);
+                            const applianceData = await applianceResponse.json();
+
+                            if (applianceData.success) {
+                                localStorage.setItem('kpAppliances', JSON.stringify(applianceData.appliances));
+                                localStorage.setItem('kproomno', roomno);
+                                window.location.href = 'kpquery.html';
+                            } else {
+                                alert(applianceData.message || 'Failed to fetch appliances for this room.');
+                                console.error('Failed to fetch KP appliances:', applianceData);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching KP appliances:', error);
+                            alert('An error occurred while fetching appliances.');
+                        }
+                    });
+
+                    const button = document.createElement('button');
+                    button.classList.add('large-btn');
+                    // Add alternating classes sf/fs (same style in provided css)
+                    button.classList.add(index % 2 === 0 ? 'sf' : 'fs');
+                    button.textContent = roomno;
+
+                    link.appendChild(button);
+                    container.appendChild(link);
+                });
+
+            } catch (error) {
+                console.error('Error fetching or displaying rooms:', error);
+                container.innerHTML = `<p class="loading-message" style="color: red;">Error loading rooms: ${error.message}. Please check connection or contact support.</p>`;
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const user1 = JSON.parse(localStorage.getItem("user"));
+            const homeLink = document.querySelector(".hreff");
+
+            // Setup Home link redirection
+            if (homeLink) {
+                homeLink.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    if (user1 && user1.residing_status === "Hosteller") {
+                        window.location.href = "Homepage.html";
+                    } else {
+                        window.location.href = "Homepage1.html";
+                    }
+                });
+            } else {
+                console.error("Home link (.hreff) not found");
+            }
+
+            // Fetch and display the dynamic room buttons for the fourth floor
+            fetchAndDisplayRooms();
+        });
+
+    </script>
+
+</body>
+</html>

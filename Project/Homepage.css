@@ -1,0 +1,147 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    background-image: url("./images/background.png");
+    background-size: cover;
+    background-position: bottom;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: lightgray;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.hamburger:hover {
+    font-size: 30px;
+}
+
+.buttons {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.large-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    width: 80%;
+    max-width: 400px;
+    height: 150px;
+    margin: 15px auto;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    text-shadow:
+        2px 2px 2px black,    /* Bottom-right shadow */
+        -2px -2px 2px black,  /* Top-left shadow */
+        2px -2px 2px black,   /* Bottom-left shadow */
+        -2px 2px 2px black;   /* Top-right shadow */   
+}
+
+.large-btn:hover {
+    transform: scale(1.1);
+    filter: brightness(0.9);
+}
+
+.kp {
+    background-image: url('./images/knowledgepark.jpg');
+}
+
+.red {
+    background-image: url('./images/Red building.jpg');
+}
+
+.hostel {
+    background-image: url('./images/hostel_placeholder.jpg');
+}
+
+.pending{
+    background-image: url('./images/pending.png');
+}
+
+.completed{
+    background-image: url('./images/completed.png');
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        background: black;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 150px;
+        padding: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .hamburger {
+        display: block;
+    }
+}

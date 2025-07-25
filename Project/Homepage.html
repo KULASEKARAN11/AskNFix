@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="Homepage.css">
+    
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="login.html" onclick="logout()">Logout</a></li>
+
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <section class="buttons">
+        <a href="kphome.html" class="large-btn kp">Knowledge Park</a>
+        <a href="redhome.html" class="large-btn red">Red Building</a>
+        <a href="hostel.html" class="large-btn hostel">Hostel</a>
+        <a href="Pending_queries.html" class="large-btn pending">View Pending Queries</a>
+        <a href="Completed_Queries.html" class="large-btn completed">View Completed Queries</a>
+    </section>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <hr>
+        <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+            const roommates = JSON.parse(localStorage.getItem('roommates')) || [];
+            console.log("Roommates stored:", roommates);
+        }
+
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch("http://localhost:3000/user", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+
+                if (!response.ok) {
+                    console.log("User not logged in, redirecting...");
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success && data.user) {
+                    console.log("User logged in:", data.user.rollno);
+                    localStorage.setItem('loggedInRollno', data.user.rollno); // Store rollno in local storage
+                } else {
+                    console.log("User data not found, redirecting...");
+                    window.location.href = "login.html";
+                }
+            } catch (error) {
+                console.error("Error checking login status:", error);
+                window.location.href = "login.html";
+            }
+        }
+
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message);
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout.');
+            });
+        }
+        window.addEventListener('load', checkLoginStatus);
+
+    </script>
+
+</body>
+</html>

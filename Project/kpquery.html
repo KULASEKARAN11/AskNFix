@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - KP Building Query</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="kpquery.css">
+
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a class="hreff" href="#">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="logout(event)">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main style="margin-left: 20px;">
+        <h2>Report an Issue</h2>
+
+        <p><strong>Roll Number:</strong> <span id="displayRollNo"></span></p>
+        <p><strong>Name:</strong> <span id="displayName"></p>
+        <p><strong>Room No:</strong> </span><span id="displayRoomNo"></span></p>
+
+        <h3>Select Faulty Appliances:</h3>
+        <ul id="applianceList"></ul>
+        <button id="querybtn" onclick="submitFaultyAppliances()">Raise Query</button>
+
+    </main>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +7397247862</p>
+        <hr>
+        <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        let fullApplianceListFromUser = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const storedUser = localStorage.getItem("user");
+            const storedRoomNo = localStorage.getItem("kproomno");
+            const storedKpAppliances = localStorage.getItem("kpAppliances");
+
+            if (!storedUser) {
+                alert("Unauthorized access! Please login again.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const user = JSON.parse(storedUser);
+            console.log("User data on query page:", user);
+            console.log("Room number from localStorage:", storedRoomNo);
+            console.log("KP Appliances from localStorage:", storedKpAppliances);
+
+            document.getElementById("displayRollNo").textContent = user.rollno || "N/A";
+            document.getElementById("displayName").textContent = user.name || "N/A";
+
+            const roomNoDisplay = document.getElementById("displayRoomNo");
+            if (storedRoomNo) {
+                roomNoDisplay.textContent = ` ${storedRoomNo}`;
+            } else {
+                roomNoDisplay.textContent = " (Not selected)";
+            }
+            roomNoDisplay.style.marginLeft = "5px";
+
+            const applianceListElement = document.getElementById("applianceList");
+            const queryBtn = document.getElementById("querybtn");
+
+            if (storedKpAppliances) {
+                fullApplianceListFromUser = JSON.parse(storedKpAppliances);
+                console.log("Full appliance list from localStorage (KP):", fullApplianceListFromUser);
+                applianceListElement.innerHTML = "";
+                let canSubmitAnyQuery = false;
+
+                fullApplianceListFromUser.forEach((appliance, index) => {
+                    if (typeof appliance.appliance_id === 'undefined' || appliance.appliance_id === null || typeof appliance.name === 'undefined' || typeof appliance.count === 'undefined') {
+                        console.error("Error loading query page: User appliance data missing essential fields (id, name, count):", appliance);
+                        const errorItem = document.createElement("li");
+                        errorItem.textContent = `Error: Invalid data for appliance entry. Cannot process queries.`;
+                        errorItem.style.color = 'red';
+                        applianceListElement.appendChild(errorItem);
+                        return;
+                    }
+
+                    const li = document.createElement("li");
+                    const nameSpan = document.createElement("span");
+
+                    const totalCount = appliance.count || 0;
+                    const reportedCount = appliance.reportedCount || 0;
+                    let maxSelectable = Math.max(0, totalCount - reportedCount);
+
+                    nameSpan.textContent = `${appliance.name} (Total: ${totalCount}, Reported: ${reportedCount}) `;
+                    nameSpan.style.marginRight = '10px';
+                    li.appendChild(nameSpan);
+
+                    if (totalCount === reportedCount && totalCount > 0) {
+                        const reportedSpan = document.createElement("span");
+                        reportedSpan.textContent = "This appliance is already fully reported";
+                        reportedSpan.style.fontStyle = "italic";
+                        reportedSpan.style.color = "grey";
+                        li.appendChild(reportedSpan);
+                    } else {
+                        const minusBtn = document.createElement("button");
+                        minusBtn.textContent = "-";
+
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.value = "0";
+                        input.readOnly = true;
+                        input.style.width = "30px";
+                        input.style.textAlign = "center";
+                        input.dataset.maxCount = maxSelectable;
+                        input.id = `appliance-count-${index}`;
+
+                        const plusBtn = document.createElement("button");
+                        plusBtn.textContent = "+";
+
+                        minusBtn.onclick = () => {
+                            let value = parseInt(input.value);
+                            if (value > 0) input.value = value - 1;
+                        };
+
+                        plusBtn.onclick = () => {
+                            let value = parseInt(input.value);
+                            let maxValue = parseInt(input.dataset.maxCount);
+                            if (value < maxValue) {
+                                input.value = value + 1;
+                            }
+                        };
+
+                        li.appendChild(minusBtn);
+                        li.appendChild(input);
+                        li.appendChild(plusBtn);
+                        if (maxSelectable > 0) {
+                            canSubmitAnyQuery = true;
+                        }
+                    }
+                    applianceListElement.appendChild(li);
+                });
+
+                if (queryBtn) {
+                    if(!canSubmitAnyQuery) {
+                        queryBtn.disabled = true;
+                        const li = document.createElement("li");
+                        li.textContent = "All appliances are either fully reported or have pending reports for all available units.";
+                        li.style.fontStyle = "italic";
+                        li.style.marginTop = "10px";
+                        applianceListElement.appendChild(li);
+                    } else {
+                        queryBtn.disabled = false;
+                    }
+                }
+
+            } else {
+                applianceListElement.innerHTML = "<li>No appliances found for this room.</li>";
+                if(queryBtn) queryBtn.disabled = true;
+            }
+
+            const homeLink = document.querySelector(".hreff");
+            const user1 = JSON.parse(localStorage.getItem("user"));
+
+            if (homeLink) {
+                homeLink.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    if (user1 && user1.residing_status === "Hosteller") {
+                        window.location.href = "Homepage.html";
+                    } else {
+                        window.location.href = "Homepage1.html";
+                    }
+                });
+            } else {
+                console.error("Home link (.hreff) not found");
+            }
+        });
+
+        function submitFaultyAppliances() {
+            const selectedFaultyAppliances = [];
+            fullApplianceListFromUser.forEach((appliance, index) => {
+                const inputElement = document.getElementById(`appliance-count-${index}`);
+                if (inputElement) {
+                    const count = parseInt(inputElement.value);
+                    if (count > 0) {
+                        selectedFaultyAppliances.push({
+                            appliance_id: appliance.appliance_id,
+                            name: appliance.name,
+                            count: count
+                        });
+                    }
+                } else {
+                    console.warn(`Input element not found for appliance index ${index}, name: ${appliance.name}`);
+                }
+            });
+
+            if (selectedFaultyAppliances.length === 0) {
+                if(document.getElementById("querybtn") && !document.getElementById("querybtn").disabled) {
+                    alert("Please select the count (> 0) for at least one faulty appliance.");
+                } else {
+                    console.log("Submit called but no items selected and button might be disabled.");
+                }
+                return;
+            }
+
+            console.log("Selected faulty appliances to store:", selectedFaultyAppliances);
+            localStorage.setItem("appliances", JSON.stringify(selectedFaultyAppliances));
+            localStorage.setItem("queryType", "kp"); // Store query type
+            window.location.href = 'raiseQuery.html';
+        }
+
+        function logout(event) {
+            event.preventDefault();
+            console.log("Logout initiated...");
+            fetch('/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("kproomno");
+                    localStorage.removeItem("kpAppliances");
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message || 'Logout failed.');
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert(`An error occurred during logout: ${error.message}`);
+            });
+        }
+    </script>
+</body>
+</html>

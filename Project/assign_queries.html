@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Queries - AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="view_queries.css"> <!-- Changed CSS link -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Removed inline style block -->
+</head>
+<body>
+
+    <!-- Header copied from view_queries.html -->
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="staff_dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com"
+                       target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Using the same container class as view_queries.html -->
+        <div class="container">
+            <h1>Assignable Queries</h1>
+            <!-- Removed hr, styling handled by CSS -->
+            <div id="queries-list" class="queries-container"> <!-- Added class for styling -->
+                <p class="loading-message">Loading queries...</p>
+                <!-- Queries will be loaded here by JavaScript -->
+            </div>
+            <div id="status-message" class="loading-message error-message" style="display: none;"></div> <!-- For general status messages, styled like loading/error -->
+             <div class="clear"></div> <!-- Added clear div like in view_queries -->
+        </div>
+        <!-- Modal might be needed later if adding completion from this page -->
+    </main>
+
+    <!-- Footer copied from view_queries.html -->
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <p>AskNFix &copy; 2025</p>
+    </footer>
+
+    <script>
+        const queriesListDiv = document.getElementById('queries-list');
+        const statusMessageDiv = document.getElementById('status-message');
+        let availableStaffCache = null; // Cache available staff to avoid repeated fetches
+
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            navLinks?.classList.toggle("show");
+        }
+
+        // Function to format date and time nicely
+        function formatDateTime(dateStr, timeStr) {
+            if (!dateStr) return 'N/A';
+            try {
+                const date = new Date(dateStr);
+                // Adjust for potential time part if dateStr includes it
+                if (timeStr) {
+                    const timeParts = timeStr.split(':');
+                    if (timeParts.length === 3) {
+                        date.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), parseInt(timeParts[2], 10));
+                    }
+                }
+                return date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            } catch (e) {
+                console.error("Error formatting date/time:", e);
+                return `${dateStr} ${timeStr || ''}`.trim();
+            }
+        }
+
+        // Function to display queries
+        function displayQueries(queries) {
+            queriesListDiv.innerHTML = ''; // Clear previous content
+            if (!queries || queries.length === 0) {
+                queriesListDiv.innerHTML = '<p>No assignable queries found.</p>';
+                return;
+            }
+
+            queries.forEach(query => {
+                const queryCard = document.createElement('div');
+                // Use class name from view_queries.css
+                queryCard.className = 'query-item';
+                queryCard.dataset.queryId = query.queryId; // Store query ID
+
+                let appliancesHtml = 'None specified'; // Match text from view_queries
+                if (query.appliances && query.appliances.length > 0) {
+                    appliancesHtml = `<ul>${query.appliances.map(app => `<li>${app.name} (Count: ${app.count})</li>`).join('')}</ul>`;
+                }
+
+                // Determine block type
+                let blockType = 'Unknown';
+                if (query.blockId === 1 || query.blockId === 2) blockType = 'Hostel';
+                else if (query.blockId === 3 || query.blockId === 4) blockType = 'Academic/College';
+
+                queryCard.innerHTML = `
+                    <h3>Query #${query.queryId} - Room ${query.roomNo} (${blockType})</h3>
+                    <p><strong>Reported By:</strong> ${query.reportedBy || 'N/A'}</p>
+                    <p><strong>Raised:</strong> ${formatDateTime(query.raised_date, query.raised_time)}</p>
+                    <p><strong>Description:</strong> ${query.description}</p>
+                    <p><strong>Appliances:</strong></p>
+                    ${appliancesHtml}
+                    <p><strong>Status:</strong> <span class="status-${query.status.replace(' ', '-')}">${query.status}</span> ${query.isAssigned ? `<span style="color: orange; font-weight: bold;">(Assigned to: ${query.assignedStaffName || 'N/A'} [${query.assignedStaffId || 'ID Unknown'}])</span>` : ''}</p>
+                    <div class="assignment-section" id="assign-controls-${query.queryId}">
+                        ${!query.isAssigned ? `<button class="assign-button" onclick="showAssignControls(${query.queryId})">Assign Staff</button>` : '<span style="font-style: italic; color: #555;">Query is currently assigned.</span>'}
+                        <!-- Dropdown and confirm button will be added here if Assign Staff is clicked -->
+                    </div>
+                    <div class="message-area" id="message-${query.queryId}"></div>
+                `;
+                // Append to the container with the correct class
+                queriesListDiv.appendChild(queryCard);
+            });
+        }
+
+        // Function to fetch assignable queries
+        async function fetchAssignableQueries() {
+            statusMessageDiv.textContent = ''; // Clear previous status
+            try {
+                const response = await fetch('/api/assignable-queries');
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = 'stafflogin.html'; // Redirect if not authorized
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    displayQueries(result.queries);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch queries.');
+                }
+            } catch (error) {
+                console.error('Error fetching assignable queries:', error);
+                queriesListDiv.innerHTML = `<p class="error-message">Error loading queries: ${error.message}. Please try again later.</p>`;
+            }
+        }
+
+        // Function to fetch available staff (with caching)
+        async function fetchAvailableStaff() {
+            if (availableStaffCache) {
+                return availableStaffCache; // Return cached data
+            }
+            try {
+                const response = await fetch('/api/available-staff');
+                 if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    availableStaffCache = result.staff; // Cache the result
+                    return availableStaffCache;
+                } else {
+                    throw new Error(result.message || 'Failed to fetch staff.');
+                }
+            } catch (error) {
+                console.error('Error fetching available staff:', error);
+                statusMessageDiv.textContent = `Error fetching staff: ${error.message}`;
+                return null; // Indicate failure
+            }
+        }
+
+        // Function to show assignment controls (dropdown and button)
+        async function showAssignControls(queryId) {
+            const controlsDiv = document.getElementById(`assign-controls-${queryId}`);
+            const messageArea = document.getElementById(`message-${queryId}`);
+            const assignButton = controlsDiv.querySelector('.assign-button'); // Find the specific button
+            if (!controlsDiv) return;
+
+            // Disable original button and show loading text
+            if(assignButton) {
+                assignButton.disabled = true;
+                assignButton.textContent = 'Loading Staff...';
+            } else {
+                 controlsDiv.innerHTML = 'Loading staff...'; // Fallback placeholder
+            }
+            messageArea.textContent = ''; // Clear previous messages
+
+            const staffList = await fetchAvailableStaff();
+
+            // Re-enable original button if staff loading fails
+            const enableOriginalButton = () => {
+                 if(assignButton) {
+                    assignButton.disabled = false;
+                    assignButton.textContent = 'Assign Staff';
+                 }
+            };
+
+            if (!staffList) {
+                controlsDiv.innerHTML = `<button class="assign-button" onclick="showAssignControls(${queryId})">Retry Assign</button>`; // Offer retry
+                messageArea.textContent = 'Failed to load staff list.';
+                messageArea.className = 'message-area error-message'; // Style as error
+                enableOriginalButton(); // Re-enable original button
+                return;
+            }
+
+            if (staffList.length === 0) {
+                 controlsDiv.innerHTML = '<span>No available staff found.</span>';
+                 // Keep original button disabled as there's nothing to assign
+                 return;
+            }
+
+            // Build dropdown
+            const select = document.createElement('select');
+            select.id = `staff-select-${queryId}`;
+            select.innerHTML = '<option value="">-- Select Staff --</option>'; // Default option
+            staffList.forEach(staff => {
+                const option = document.createElement('option');
+                option.value = staff.id;
+                option.textContent = `${staff.name} (${staff.id})`;
+                select.appendChild(option);
+            });
+
+            // Build confirm button (use classes from view_queries.css if desired)
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = 'Confirm Assignment';
+            confirmButton.className = 'confirm-assign-button'; // Add class for styling
+            confirmButton.onclick = () => confirmAssignment(queryId);
+
+            // Build cancel button
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.className = 'cancel-assign-button'; // Add class for styling
+            cancelButton.onclick = () => {
+                // Restore original "Assign Staff" button
+                controlsDiv.innerHTML = `<button class="assign-button" onclick="showAssignControls(${queryId})">Assign Staff</button>`;
+                messageArea.textContent = ''; // Clear any messages
+                messageArea.className = 'message-area';
+            };
+
+
+            // Replace placeholder with controls
+            controlsDiv.innerHTML = ''; // Clear loading message
+            const controlsContainer = document.createElement('div'); // Wrap controls
+            controlsContainer.className = 'assignment-controls'; // Use class for styling
+            controlsContainer.appendChild(select);
+            controlsContainer.appendChild(confirmButton);
+            controlsContainer.appendChild(cancelButton); // Add cancel button
+            controlsDiv.appendChild(controlsContainer);
+        }
+
+        // Function to confirm and execute assignment
+        async function confirmAssignment(queryId) {
+            const selectElement = document.getElementById(`staff-select-${queryId}`);
+            const messageArea = document.getElementById(`message-${queryId}`);
+            const staffId = selectElement ? selectElement.value : null;
+
+            if (!staffId) {
+                messageArea.textContent = 'Please select a staff member.';
+                messageArea.className = 'message-area error-message';
+                return;
+            }
+
+            messageArea.textContent = 'Assigning...';
+            messageArea.className = 'message-area'; // Reset class
+
+            try {
+                const response = await fetch('/api/assign-query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ queryId, staffId }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageArea.textContent = result.message || 'Assignment successful!';
+                    messageArea.className = 'message-area success-message';
+                    // Refresh the list to show the query as assigned and remove controls
+                    fetchAssignableQueries();
+                    availableStaffCache = null; // Clear cache as availability might change
+                } else {
+                    messageArea.textContent = `Assignment failed: ${result.message || 'Unknown error'}`;
+                    messageArea.className = 'message-area error-message';
+                }
+            } catch (error) {
+                console.error('Error assigning query:', error);
+                messageArea.textContent = `Error: ${error.message}`;
+                messageArea.className = 'message-area error-message';
+            }
+        }
+
+        // Function to handle user logout
+        async function handleLogout() {
+            // Use logout logic from view_queries.html for consistency
+            console.log("handleLogout called from assign_queries");
+             try {
+                const response = await fetch('/logout', { // Assuming /logout endpoint exists
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send cookies if needed
+                });
+
+                if (response.ok) {
+                     const result = await response.json().catch(() => ({}));
+                     console.log("Server logout successful or handled.");
+                } else {
+                     console.warn(`Logout request failed with status: ${response.status}`);
+                }
+
+                 localStorage.clear(); // Clear local storage
+                 sessionStorage.clear(); // Clear session storage
+                 window.location.href = '/stafflogin.html'; // Redirect to staff login
+
+            } catch (error) {
+                console.error('Error during logout fetch operation:', error);
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 alert('An error occurred during logout. Redirecting to login.');
+                 window.location.href = '/stafflogin.html';
+            }
+        }
+
+        // Initial fetch of queries when the page loads
+        document.addEventListener('DOMContentLoaded', fetchAssignableQueries);
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Queries - AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <!-- Link to the same CSS as assign_queries.html for consistent card styling -->
+    <link rel="stylesheet" href="view_queries.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header structure remains the same -->
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="staff_dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Use the same container class -->
+        <div class="container">
+            <h1>Completed Queries</h1>
+            <!-- Removed hr, styling handled by CSS -->
+            <div class="user-info" style="text-align: left; margin-bottom: 15px;"> <!-- Adjusted user-info style -->
+                 <p>Viewing completed queries for: <strong id="staff-role">Loading...</strong></p>
+            </div>
+            <!-- Replace table with a div for query cards -->
+            <div id="completed-queries-list" class="queries-container">
+                <p class="loading-message">Loading completed queries...</p>
+                <!-- Query cards will be inserted here by JavaScript -->
+            </div>
+             <div class="clear"></div> <!-- Added clear div -->
+        </div>
+    </main>
+
+    <!-- Footer structure remains the same -->
+    <footer>
+        <p>Contact us: support@asknfix147@gmail.com | Phone: +123 456 7890</p>
+        <p>AskNFix © 2024</p>
+    </footer>
+
+    <script>
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        // Function to handle user logout
+        async function handleLogout() {
+            console.log("handleLogout called from completed queries staff page");
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                 });
+                 if (!response.ok) console.error(`Logout request failed with status: ${response.status}`);
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            } finally {
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 window.location.href = 'stafflogin.html';
+            } // Correct closing brace for finally block
+        } // Correct closing brace for handleLogout function
+
+        // Helper function to format date and time (similar to assign_queries.html)
+        function formatDateTime(isoString) {
+            if (!isoString) return 'N/A';
+            try {
+                const date = new Date(isoString);
+                // Use 'en-IN' locale for India-specific formatting if desired
+                return date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            } catch (e) {
+                console.error("Error formatting date/time:", e);
+                return isoString; // Fallback to original string
+            }
+        }
+
+        // Function to handle user logout (remains the same)
+        async function handleLogout() {
+            console.log("handleLogout called from completed queries staff page");
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                 });
+                 if (!response.ok) console.error(`Logout request failed with status: ${response.status}`);
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            } finally {
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 window.location.href = 'stafflogin.html';
+            }
+        }
+
+        // Updated function to fetch and display completed queries as cards
+        async function fetchCompletedQueries() {
+            const queriesListDiv = document.getElementById('completed-queries-list');
+            const staffRoleElement = document.getElementById('staff-role');
+            queriesListDiv.innerHTML = '<p class="loading-message">Loading completed queries...</p>'; // Clear previous content
+
+            try {
+                // First, get the current user's role (remains the same)
+                const userResponse = await fetch('/user');
+                if (!userResponse.ok) {
+                    if (userResponse.status === 401 || userResponse.status === 403) {
+                        window.location.href = 'stafflogin.html'; // Redirect if not logged in
+                    } else {
+                        throw new Error(`Failed to fetch user data: ${userResponse.status}`);
+                    }
+                    return;
+                }
+                const userData = await userResponse.json();
+
+                if (!userData.success || !userData.user || userData.user.type !== 'staff') {
+                     console.warn('Not logged in as staff or error fetching user data.');
+                     window.location.href = 'stafflogin.html';
+                     return;
+                }
+
+                const userRole = userData.user.role;
+                staffRoleElement.textContent = userRole || 'N/A'; // Display the role
+
+                // Now fetch the completed queries based on the role (remains the same)
+                const response = await fetch('/completed-queries-staff'); // Endpoint is correct
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+
+                queriesListDiv.innerHTML = ''; // Clear loading message
+
+                if (result.success && result.queries.length > 0) {
+                    result.queries.forEach(query => {
+                        const queryCard = document.createElement('div');
+                        queryCard.className = 'query-item'; // Use the class from view_queries.css
+                        queryCard.dataset.queryId = query.query_id;
+
+                        // Determine block type (similar logic as assign_queries)
+                        let blockType = 'Unknown';
+                        // Note: The backend currently sends block_id, need to adjust if needed
+                        // Assuming block_id is available directly or indirectly via location mapping if necessary
+                        // For now, we'll omit block type display unless block_id is confirmed in the response payload
+                        // Let's assume location implies block for now.
+
+                        queryCard.innerHTML = `
+                            <h3>Query #${query.query_id} - Location: ${query.location}</h3>
+                            <p><strong>Student ID:</strong> ${query.student_id || 'N/A'}</p>
+                            <p><strong>Issue Type/Original Desc:</strong> ${query.issue_type || 'N/A'}</p>
+                            <p><strong>Raised:</strong> ${formatDateTime(query.raised_at)}</p>
+                            <hr style="border-top: 1px solid #eee; margin: 10px 0;">
+                            <p><strong>Completed:</strong> ${formatDateTime(query.completed_at)}</p>
+                            <p><strong>Completed By:</strong> ${query.completed_by_staff_name || 'N/A'} (${query.completed_by_staff_id || 'ID Unknown'})</p>
+                            <p><strong>Completion Remarks:</strong> ${query.remarks || 'N/A'}</p>
+                            <p><strong>Status:</strong> <span class="status-done" style="color: green; font-weight: bold;">Done</span></p>
+                        `;
+                        queriesListDiv.appendChild(queryCard);
+                    });
+                } else if (result.success && result.queries.length === 0) {
+                    queriesListDiv.innerHTML = '<p class="loading-message">No completed queries found for your role.</p>';
+                } else {
+                    throw new Error(result.message || 'Failed to fetch completed queries.');
+                }
+            } catch (error) {
+                console.error('Error fetching completed queries:', error);
+                queriesListDiv.innerHTML = `<p class="loading-message error-message">Error loading queries: ${error.message}</p>`;
+            }
+        }
+
+
+        // Fetch queries when the page loads
+        document.addEventListener('DOMContentLoaded', fetchCompletedQueries);
+    </script>
+
+</body>
+</html>

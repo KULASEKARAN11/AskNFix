@@ -1,0 +1,443 @@
+
+/* view_queries.css - With Fixes */
+
+/* --- Base Styles (Body, Header, Footer) --- */
+body {
+    background: url('./images/loginbackground.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    box-sizing: border-box;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* position: fixed; REMOVE THIS LINE */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 15px 20px;
+    box-sizing: border-box;
+}
+
+.logo {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ddd;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+}
+
+
+footer {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-align: center;
+    /* position: fixed; REMOVE THIS LINE */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    font-size: 0.9em;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+footer p {
+    margin: 5px 0;
+}
+
+/* --- Main Content Area for Queries --- */
+main {
+    /* padding-top: 65px; REMOVE THIS LINE */
+    /* padding-bottom: 52px; REMOVE THIS LINE */
+    /* min-height: calc(100vh - 65px - 52px); REMOVE OR ADJUST THIS LINE */
+    box-sizing: border-box;
+}
+
+.container {
+    max-width: 900px;
+    margin: 150px auto;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.container hr {
+    margin-top: 10px;
+    margin-bottom: 25px;
+    border: 0;
+    border-top: 1px solid #ddd;
+}
+
+
+/* --- Query List Styling --- */
+#queries-container {
+    margin-top: 20px;
+}
+
+.loading-message {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+    padding: 20px;
+}
+
+.query-item {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.query-item h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #444;
+    font-size: 1.1em;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 5px;
+}
+
+.query-item p {
+    margin: 8px 0;
+    font-size: 0.95em;
+    color: #555;
+}
+
+.query-item p strong {
+    font-weight: 600;
+    color: #333;
+    margin-right: 5px;
+    display: inline-block;
+    min-width: 100px;
+}
+
+/* --- Button Styles --- */
+/* Back button was removed from HTML, styles removed */
+.clear {
+    clear: both;
+}
+
+/* Still useful if other floats added */
+.mark-done-button {
+    background-color: #28a745;
+    color: #fff;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin-top: 10px;
+}
+
+.mark-done-button:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+.mark-done-button:active {
+    background-color: #1e7e34;
+    transform: scale(0.98);
+}
+
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+    body {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    main {
+        padding-top: 0;
+        /* Remove main padding */
+        padding-bottom: 0;
+        /* Remove main padding */
+        min-height: auto;
+        /* Adjust min-height */
+    }
+
+    header {
+        padding: 10px 15px;
+    }
+
+    .logo {
+        font-size: 1.5em;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        background: rgba(0, 0, 0, 0.9);
+        position: absolute;
+        top: 55px;
+        right: 15px;
+        width: 180px;
+        padding: 10px 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .nav-links li {
+        margin: 12px 0;
+    }
+
+    .hamburger {
+        display: block;
+    }
+
+    footer {
+        padding: 8px 15px;
+        font-size: 0.8em;
+    }
+
+    .container {
+        margin: 20px auto;
+        padding: 20px;
+        width: calc(100% - 30px);
+        box-sizing: border-box;
+    }
+}
+
+/* --- Modal Styles --- */
+/* The Modal (background) */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 60%;
+    /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal-mark-done-button {
+    background-color: #28a745;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin-top: 15px;
+}
+
+#modal-mark-done-button:hover {
+    background-color: #218838;
+}
+
+#description-text {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    /* Allow vertical resizing */
+}
+
+
+/* --- Styles for Assignment Controls (Added for assign_queries.html) --- */
+.assignment-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.assignment-controls {
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Vertically align items */
+    gap: 10px; /* Space between elements */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.assignment-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9em;
+    min-width: 180px; /* Give dropdown some width */
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.assignment-controls button,
+button.assign-button, /* Style the initial assign button too */
+button.confirm-assign-button,
+button.cancel-assign-button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none; /* Remove default border */
+    color: white;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+button.assign-button { /* Initial button */
+    background-color: #007bff; /* Blue */
+}
+button.assign-button:hover {
+    background-color: #0056b3;
+}
+
+button.confirm-assign-button {
+    background-color: #28a745; /* Green */
+}
+button.confirm-assign-button:hover {
+    background-color: #218838;
+}
+
+button.cancel-assign-button {
+    background-color: #6c757d; /* Grey */
+    color: white;
+}
+button.cancel-assign-button:hover {
+    background-color: #5a6268;
+}
+
+.assignment-controls button:active,
+button.assign-button:active,
+button.confirm-assign-button:active,
+button.cancel-assign-button:active {
+    transform: scale(0.98); /* Slight press effect */
+}
+
+/* Style for message area within assignment section */
+.assignment-section .message-area {
+    margin-top: 10px;
+    font-size: 0.9em;
+    padding: 8px;
+    border-radius: 4px;
+    display: block; /* Ensure it takes space */
+    width: calc(100% - 16px); /* Adjust width considering padding */
+}
+.assignment-section .error-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    font-weight: bold;
+}
+.assignment-section .success-message {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    font-weight: bold;
+}
+
+/* Responsive adjustments for assignment controls */
+@media (max-width: 768px) {
+    .assignment-controls {
+        flex-direction: column; /* Stack vertically */
+        align-items: stretch; /* Make items full width */
+        gap: 8px;
+    }
+    .assignment-controls select,
+    .assignment-controls button {
+        width: 100%; /* Make controls full width */
+        text-align: center;
+    }
+}

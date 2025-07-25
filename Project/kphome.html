@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="kphome.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">KP BUILDING</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a class="hreff">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="login.html" onclick="logout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <section class="buttons">
+        <a href="kpff.html">
+            <button class="large-btn gp">GROUND FLOOR</button>
+        </a>
+        <a href="kpsf.html">
+            <button class="large-btn fs">FIRST FLOOR</button>
+        </a>
+        <a href="kptf.html">
+            <button class="large-btn sf">SECOND FLOOR</button>
+        </a>
+        <a href="kp4f.html">
+            <button class="large-btn tf">THIRD FLOOR</button>
+        </a>
+    </section>
+
+    <footer>
+        <p >Contact us: support@asknfix.com | Phone: +123 456 7890<br><hr>
+            AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+        const user1 = JSON.parse(localStorage.getItem("user")); 
+        //alert(user1 ? user1.residing_status : "User data not found");
+         document.querySelector(".hreff").addEventListener("click", function() {
+            if(user1.residing_status==="Hosteller")
+            window.location.href = "Homepage.html";
+         else
+        window.location.href = "Homepage1.html";
+        });
+        function logout() {
+    fetch('/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = 'login.html';
+        } else {
+            alert(data.message);
+            console.error('Logout failed:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error during logout:', error);
+        alert('An error occurred during logout.');
+    });
+}
+
+    </script>
+
+</body>
+</html>

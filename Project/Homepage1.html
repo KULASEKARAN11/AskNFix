@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - Home</title> <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="Homepage1.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage1.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="event.preventDefault(); logout();">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <section class="buttons">
+        <a href="kphome.html" class="large-btn kp">Knowledge Park</a>
+        <a href="redhome.html" class="large-btn red">Red Building</a>
+        <a href="Pending_queries1.html" class="large-btn">View Pending Queries</a> 
+        <a href="Completed_Queries1.html" class="large-btn">View Completed Queries</a> </section>
+
+    <div class="footer">
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890<br><hr>
+        AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+         <p style="margin-top: 10px;">AskNFix &copy; 2025</p> </div>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch("http://localhost:3000/user", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+
+                if (!response.ok) {
+                    // If status indicates not logged in (e.g., 401, 404), redirect
+                    if (response.status === 401 || response.status === 404) {
+                       console.log("User session not found or unauthorized, redirecting to login...");
+                       window.location.href = "login.html";
+                    } else {
+                        // Handle other potential server errors without redirecting immediately
+                         console.error(`Server error checking login status: ${response.status}`);
+                         // Maybe display a message to the user?
+                    }
+                    return; // Stop processing if response not ok
+                }
+
+                const data = await response.json();
+                if (data.success && data.user) {
+                    console.log("User logged in:", data.user.rollno);
+                    // Optional: Store user info if needed elsewhere, but checkLoginStatus is mainly for validation here
+                    // localStorage.setItem('loggedInUser', JSON.stringify(data.user));
+                } else {
+                    // If success is false or user object is missing in response
+                    console.log("User data not found in successful response, redirecting...");
+                    window.location.href = "login.html";
+                }
+            } catch (error) {
+                console.error("Network or other error checking login status:", error);
+                // Redirect on network errors etc., as we can't confirm login state
+                window.location.href = "login.html";
+            }
+        }
+
+        // Logout function (ensure this matches your backend route and clears necessary storage)
+        async function logout() { // Made async for consistency, although original used .then()
+             console.log("Logout initiated...");
+             try {
+                 const response = await fetch('/logout', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     credentials: 'include' // Send cookies if needed
+                 });
+
+                 // Assume logout is successful on the client-side regardless of server response details
+                 // Server should handle session invalidation
+                 console.log("Clearing local user data (if any)...");
+                 localStorage.removeItem('loggedInUser'); // Clear any stored user info
+                 localStorage.removeItem('loggedInRollno'); // Clear specific rollno if stored
+                 sessionStorage.clear(); // Clear session storage too
+
+                 // Optionally show a message before redirecting
+                 window.location.href = 'login.html'; // Redirect to login page
+
+             } catch (error) {
+                  console.error('Error during logout fetch operation:', error);
+                  // Still clear storage and redirect even if fetch fails
+                  localStorage.removeItem('loggedInUser');
+                  localStorage.removeItem('loggedInRollno');
+                  sessionStorage.clear();
+                  alert('An error occurred during logout. Redirecting to login.');
+                  window.location.href = 'login.html';
+             }
+        }
+
+        // Check login status when the page loads
+        window.addEventListener('load', checkLoginStatus);
+
+    </script>
+
+</body>
+</html>

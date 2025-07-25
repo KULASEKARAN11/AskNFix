@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Dashboard</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="hostel.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main style="margin-left: 20px;">
+        <h2>Welcome to Your Dashboard</h2>
+
+        <p><strong>Roll Number:</strong> <span id="displayRollNo"></span></p>
+        <p><strong>Name:</strong> <span id="displayName"></span></p>
+        <p><strong>Residing Status:</strong> <span id="displayResidingStatus"></span></p>
+        <p><strong>Room Number:</strong> <span id="displayRoomNo"></span></p>
+
+        <h3>Roommates:</h3>
+        <ul id="roommatesList"></ul>
+
+        <h3>Select Faulty Appliances:</h3>
+        <ul id="applianceList"></ul>
+        <button id="querybtn" onclick="submitFaultyAppliances()">Raise Query</button>
+
+    </main>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <hr>
+        <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        let fullApplianceListFromUser = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const storedUser = localStorage.getItem("user");
+
+            if (!storedUser) {
+                alert("Unauthorized access! Please login again.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const user = JSON.parse(storedUser);
+            console.log("User data on dashboard:", user);
+
+            document.getElementById("displayRollNo").textContent = user.rollno || "N/A";
+            document.getElementById("displayName").textContent = user.name || "N/A";
+            document.getElementById("displayResidingStatus").textContent = user.residing_status || "N/A";
+            document.getElementById("displayRoomNo").textContent = user.roomno || "Not assigned";
+
+            if (user.residing_status === "Hosteller" && user.roommates) {
+                displayRoommates(user.roommates);
+            } else if (user.residing_status === "Hosteller") {
+                document.getElementById("roommatesList").innerHTML = '<li>No roommates assigned or data missing.</li>';
+            }
+            else {
+                document.getElementById("roommatesList").innerHTML = '<li>Not applicable (Day Scholar).</li>';
+            }
+
+            const applianceListElement = document.getElementById("applianceList");
+            const queryBtn = document.getElementById("querybtn");
+
+            // Fetch hostel appliances from the new backend route
+            fetch('/hostel/appliances')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fullApplianceListFromUser = data.appliances || [];
+                        console.log("Fetched appliance list:", fullApplianceListFromUser);
+                        renderApplianceList(fullApplianceListFromUser, applianceListElement, queryBtn);
+                    } else {
+                        console.error("Failed to fetch appliances:", data.message);
+                        applianceListElement.innerHTML = `<li>Error loading appliances: ${data.message}</li>`;
+                        if (queryBtn) queryBtn.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching appliances:", error);
+                    applianceListElement.innerHTML = "<li>Error loading appliances. Please try again.</li>";
+                    if (queryBtn) queryBtn.disabled = true;
+                });
+        });
+
+        function renderApplianceList(appliances, applianceListElement, queryBtn) {
+            applianceListElement.innerHTML = "";
+            let canSubmitAnyQuery = false;
+
+            if (Array.isArray(appliances) && appliances.length > 0) {
+                appliances.forEach((appliance, index) => {
+                    if (typeof appliance.appliance_id === 'undefined' || appliance.appliance_id === null || typeof appliance.name === 'undefined' || typeof appliance.count === 'undefined') {
+                        console.error("Error loading dashboard: Appliance data missing essential fields (id, name, count):", appliance);
+                        const errorItem = document.createElement("li");
+                        errorItem.textContent = `Error: Invalid data for appliance entry. Cannot process queries.`;
+                        errorItem.style.color = 'red';
+                        applianceListElement.appendChild(errorItem);
+                        return;
+                    }
+
+                    const li = document.createElement("li");
+                    const nameSpan = document.createElement("span");
+
+                    const totalCount = appliance.count || 0;
+                    const reportedCount = appliance.reportedCount || 0;
+                    let maxSelectable = Math.max(0, totalCount - reportedCount);
+
+                    nameSpan.textContent = `${appliance.name} (Total: ${totalCount}, Reported: ${reportedCount}) `;
+                    nameSpan.style.marginRight = '10px';
+                    li.appendChild(nameSpan);
+
+                    if (totalCount === reportedCount && totalCount > 0) {
+                        const reportedSpan = document.createElement("span");
+                        reportedSpan.textContent = "This appliance is already reported";
+                        reportedSpan.style.fontStyle = "italic";
+                        reportedSpan.style.color = "grey";
+                        li.appendChild(reportedSpan);
+                    } else {
+                        const minusBtn = document.createElement("button");
+                        minusBtn.textContent = "-";
+
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.value = "0";
+                        input.readOnly = true;
+                        input.style.width = "30px";
+                        input.style.textAlign = "center";
+                        input.dataset.maxCount = maxSelectable;
+                        input.id = `appliance-count-${index}`;
+
+                        const plusBtn = document.createElement("button");
+                        plusBtn.textContent = "+";
+
+                        minusBtn.onclick = () => {
+                            let value = parseInt(input.value);
+                            if (value > 0) input.value = value - 1;
+                        };
+
+                        plusBtn.onclick = () => {
+                            let value = parseInt(input.value);
+                            let maxValue = parseInt(input.dataset.maxCount);
+                            if (value < maxValue) {
+                                input.value = value + 1;
+                            }
+                        };
+
+                        li.appendChild(minusBtn);
+                        li.appendChild(input);
+                        li.appendChild(plusBtn);
+                        if (maxSelectable > 0) {
+                            canSubmitAnyQuery = true;
+                        }
+                    }
+                    applianceListElement.appendChild(li);
+                });
+
+                if (queryBtn) {
+                    if (!canSubmitAnyQuery) {
+                        queryBtn.disabled = true;
+                        const li = document.createElement("li");
+                        li.textContent = "All appliances are either fully reported or have pending reports for all available units.";
+                        li.style.fontStyle = "italic";
+                        li.style.marginTop = "10px";
+                        applianceListElement.appendChild(li);
+                    } else {
+                        queryBtn.disabled = false;
+                    }
+                }
+
+            } else {
+                applianceListElement.innerHTML = "<li>No appliances assigned to this room.</li>";
+                if (queryBtn) queryBtn.disabled = true;
+            }
+        }
+
+        function displayRoommates(roommates) {
+            const roommatesList = document.getElementById('roommatesList');
+            roommatesList.innerHTML = '';
+            if (!Array.isArray(roommates)) {
+                console.error("displayRoommates called with non-array:", roommates);
+                return;
+            }
+            if (roommates.length === 0) {
+                roommatesList.innerHTML = '<li>No roommates assigned.</li>';
+                return;
+            }
+
+            console.log("Displaying roommates:", roommates);
+
+            roommates.forEach(rm => {
+                console.log("Processing roommate object:", rm);
+                const li = document.createElement('li');
+
+                li.textContent = `${rm.NAME || 'N/A'} (${rm.ROLLNO || 'N/A'}) - ${rm.RESIDING_STATUS || 'N/A'}`;
+
+                roommatesList.appendChild(li);
+            });
+        }
+
+        function submitFaultyAppliances() {
+            const selectedFaultyAppliances = [];
+            fullApplianceListFromUser.forEach((appliance, index) => {
+                const inputElement = document.getElementById(`appliance-count-${index}`);
+                if (inputElement) {
+                    const count = parseInt(inputElement.value);
+                    if (count > 0) {
+                        selectedFaultyAppliances.push({
+                            name: appliance.name,
+                            count: count,
+                            appliance_id: appliance.appliance_id
+                        });
+                    }
+                } else {
+                    console.warn(`Input element not found for appliance index ${index}, name: ${appliance.name}`);
+                }
+            });
+
+            if (selectedFaultyAppliances.length === 0) {
+                if (document.getElementById("querybtn") && !document.getElementById("querybtn").disabled) {
+                    alert("Please select the count (> 0) for at least one faulty appliance.");
+                } else {
+                    console.log("Submit called but no items selected and button might be disabled.");
+                }
+                return;
+            }
+
+            console.log("Saving selected faulty appliances to localStorage:", selectedFaultyAppliances);
+            localStorage.setItem("appliances", JSON.stringify(selectedFaultyAppliances));
+            localStorage.setItem("queryType", "hostel"); // Store query type
+            window.location.href = "raiseQuery.html";
+        }
+
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message);
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout.');
+            });
+        }
+
+    </script>
+</body>
+</html>

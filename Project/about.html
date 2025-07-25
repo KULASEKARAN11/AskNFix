@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="about.css"> <!-- Make sure this CSS file exists -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <!-- The href will be set dynamically by JavaScript -->
+                <li><a class="home-link" href="login.html">Home</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <div class="content-container">
+
+        <header class="about-header-content">
+            <h1>About AskNFix</h1>
+            <img src="./images/Logo.jpg" alt="AskNFix Logo" class="logo-image">
+            <p class="intro-text">
+                AskNFix is a unified web-based system designed to manage hostel accommodations, college records, and KP appliance inventory. It provides role-based access for students and administrators to ensure secure and real-time record updates. The platform allows students to raise queries efficiently and track maintenance or complaint statuses. This system aims to improve operational efficiency, transparency, and student satisfaction within educational institutions.
+            </p>
+        </header>
+
+        <section class="scope-section">
+            <h2>SCOPE OF PROJECT</h2>
+            <p style="margin-left: 20px;" class="scope-text">
+                The scope of AskNFix includes developing a web-based platform accessible to students, hostel staff, and college administrators. It features a secure login with role-based access control. The system manages hostel details, college records, and KP appliances with real-time updates. It also provides a ticketing system for efficient query raising and resolution.
+            </p>
+        </section>
+
+        <hr class="separator">
+
+        <section class="developers-section">
+            <h3>Developers:</h3>
+            <ul>
+                <li>Sasi Kiruthik</li>
+                <li>Dharshan</li>
+                <li>Kulasekaran</li>
+                <li>Hariharan</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Contact us: support@asknfix147@gmail.com | Phone: +123 456 7890</p>
+        <hr>
+        <p>AskNFix © 2025</p>
+    </footer>
+
+    <script>
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        // --- Unified Logout Function ---
+        async function handleLogout() {
+            console.log("Attempting logout...");
+            try {
+                // Send request to server's logout endpoint
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // Include credentials if using cookies/sessions
+                    credentials: 'include'
+                });
+                // Server should handle session invalidation
+                console.log("Logout request sent.");
+
+            } catch (error) {
+                 console.error('Error sending logout request:', error);
+                 // Still proceed with client-side cleanup and redirection
+            } finally {
+                 // Clear any sensitive client-side storage regardless of server response
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 alert("You have been logged out.");
+                 // Redirect to the main student login page as a safe default
+                 window.location.href = 'login.html';
+            }
+        }
+
+        // --- Dynamic Home Link Logic using Server Check ---
+        async function setupHomeLink() {
+             const homeLink = document.querySelector("header .nav-links .home-link");
+             if (!homeLink) {
+                 console.error("Home link element not found.");
+                 return;
+             }
+
+             let defaultHome = "login.html"; // Default if not logged in
+
+             try {
+                 // Fetch current user status from the server
+                 const response = await fetch('/user'); // Ensure this endpoint exists and returns user info
+
+                 if (response.ok) {
+                     const result = await response.json();
+
+                     if (result.success && result.user) {
+                         const user = result.user;
+                         console.log("User data fetched:", user);
+
+                         if (user.type === 'staff') {
+                             // User is staff
+                             console.log("User is staff. Setting home link to staff dashboard.");
+                             homeLink.href = "staff_dashboard.html";
+                         } else if (user.type === 'student') {
+                             // User is student, check residing status
+                             console.log(`User is student. Status: ${user.residing_status}`);
+                             if (user.residing_status === "Hosteller") {
+                                 homeLink.href = "Homepage.html";
+                             } else { // Assume Day Scholar or other non-hosteller status
+                                 homeLink.href = "Homepage1.html";
+                             }
+                         } else {
+                              // Unknown user type or missing info
+                              console.warn("Unknown user type received from server. Defaulting home link.");
+                              homeLink.href = defaultHome;
+                         }
+                     } else {
+                         // Server indicated success=false or no user data (likely not logged in)
+                         console.log("User not logged in or session invalid. Defaulting home link.");
+                         homeLink.href = defaultHome;
+                     }
+                 } else {
+                      // HTTP error fetching user data (e.g., 401 Unauthorized, 404 Not Found, 500 Server Error)
+                      console.warn(`Failed to fetch user data (Status: ${response.status}). Defaulting home link.`);
+                      homeLink.href = defaultHome;
+                 }
+
+             } catch (error) {
+                 // Network error or JSON parsing error
+                 console.error("Error fetching user data:", error);
+                 console.warn("Defaulting home link due to fetch error.");
+                 homeLink.href = defaultHome;
+             }
+
+             console.log(`Final home link set to: ${homeLink.href}`);
+        }
+        // --- End Home Link Logic ---
+
+
+        // --- Initialization ---
+        // Run the function to set the home link when the page content is loaded
+        document.addEventListener('DOMContentLoaded', setupHomeLink);
+
+    </script>
+
+</body>
+</html>

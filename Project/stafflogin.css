@@ -1,0 +1,156 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+#staffbtn {
+  display: inline-block;
+  width: 100%; 
+  text-wrap: wrap; 
+  background-color: #4CAF50; 
+  border: none;
+  border-radius: 5px;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 13px 1px 0px 1px; 
+  cursor: pointer;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('./images/loginbackground.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(1px);
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+#n1 {
+  width: 150px;
+  height: auto;
+  display: block;
+  margin: 20px auto 0 auto; 
+}
+
+.logo {
+  font-size: 2rem;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+#logo-img {
+  margin-top: 0px;
+  height: 50px;
+  display: inline-block;
+}
+
+h2 {
+  font-weight: 600;
+  margin-bottom: 1rem; 
+}
+
+p {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.forgot {
+  text-align: right;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.forgot a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: black;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #333;
+}
+
+.divider {
+  margin: 1.5rem 0; 
+  font-size: 0.9rem;
+  color: #555;
+  position: relative;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 1px;
+  background: #ccc;
+  top: 50%;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+/* Styles for the error message */
+.error-message {
+  color: #A00; /* Dark red color */
+  font-weight: bold; /* Make text bolder */
+  margin-top: 10px; /* Add some space above the message */
+  margin-bottom: 10px; /* Add some space below the message */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle text shadow for border effect */
+  display: none; /* Initially hidden */
+}

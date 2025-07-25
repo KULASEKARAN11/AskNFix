@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raise Query - AskNFix</title> <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="raiseQuery.css">
+    <style>
+        .form-actions {
+            margin-top: 15px;
+        }
+        .form-actions button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">AskNFix</div>
+    <nav>
+        <ul class="nav-links">
+            <li><a class="home-link" href="#">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+            <li><a href="#" onclick="event.preventDefault(); logout();">Logout</a></li> </ul>
+        <div class="hamburger" onclick="toggleMenu()">☰</div>
+    </nav>
+</header>
+
+<main style="margin-left: 20px;padding: 30px 0px;">
+    <form id="queryForm">
+        <h2>Raise a Query</h2>
+
+        <h3>Selected Faulty Appliances:</h3>
+        <ul id="selectedApplianceList">
+            <li>Loading selected appliances...</li>
+        </ul>
+
+        <h3>Describe the Issue:</h3>
+        <textarea id="issueDescription" rows="5" placeholder="Describe the problem in detail..."></textarea><br><br>
+
+        <div class="form-actions">
+            <button type="button" id="changeAppliancesButton">Back</button>
+            <button type="submit">Submit Query</button>
+        </div>
+    </form>
+</main>
+
+<footer>
+    <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+    <hr>
+    <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+    <p style="margin-top: 10px;">AskNFix &copy; 2025</p> </footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const queryForm = document.getElementById("queryForm");
+        const selectedApplianceList = document.getElementById("selectedApplianceList");
+        const issueDescriptionInput = document.getElementById("issueDescription");
+        const changeAppliancesButton = document.getElementById("changeAppliancesButton");
+
+        // Function to display selected appliances from localStorage
+        function populateApplianceList() {
+            const storedAppliances = JSON.parse(localStorage.getItem("appliances"));
+            const submitButton = queryForm?.querySelector('button[type="submit"]'); // Use optional chaining
+
+             // Ensure list element exists
+             if (!selectedApplianceList) {
+                console.error("Element with ID 'selectedApplianceList' not found.");
+                if (submitButton) submitButton.disabled = true;
+                return;
+             }
+
+             selectedApplianceList.innerHTML = ''; // Clear previous content
+
+            if (storedAppliances && Array.isArray(storedAppliances) && storedAppliances.length > 0) {
+                let hasInvalidData = false;
+                storedAppliances.forEach(appliance => {
+                    // Validate essential appliance data
+                    if (typeof appliance.appliance_id === 'undefined' || appliance.appliance_id === null || !appliance.name || typeof appliance.count === 'undefined' || appliance.count <= 0) {
+                        console.error("Error: Invalid appliance data found:", appliance);
+                        const errorItem = document.createElement("li");
+                        errorItem.textContent = `Error: Invalid data for appliance "${appliance.name || 'Unknown'}". Please go back and re-select.`;
+                        errorItem.style.color = 'red';
+                        selectedApplianceList.appendChild(errorItem);
+                        hasInvalidData = true;
+                    } else {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `${appliance.name} (x${appliance.count})`;
+                        selectedApplianceList.appendChild(listItem);
+                    }
+                });
+
+                // Disable submit button if any data was invalid
+                if (hasInvalidData && submitButton) {
+                    submitButton.disabled = true;
+                }
+
+            } else {
+                 // Handle case where no appliances are selected or stored data is invalid/empty
+                console.warn("No valid appliances found in localStorage to display.");
+                selectedApplianceList.innerHTML = "<li>No appliances selected. Please go back and select appliances.</li>";
+                if (submitButton) submitButton.disabled = true; // Disable submit if no appliances
+            }
+        }
+
+        populateApplianceList(); // Call on page load
+
+        // --- Form Submission Logic ---
+        if (queryForm) {
+            const submitButton = queryForm.querySelector('button[type="submit"]');
+
+            queryForm.addEventListener("submit", async (e) => {
+                e.preventDefault(); // Prevent default form submission
+
+                // Get necessary data from inputs and localStorage
+                const description = issueDescriptionInput.value.trim();
+                const user = JSON.parse(localStorage.getItem("user")); // User info (includes rollno, roomno, residing_status)
+                const queryType = localStorage.getItem("queryType"); // 'kp', 'red', or 'hostel'
+                const storedAppliances = JSON.parse(localStorage.getItem("appliances")); // Selected appliances
+
+                let roomno = null; // Initialize roomno
+
+                // --- Input Validation ---
+                if (!user || !user.rollno || !user.residing_status || !queryType) {
+                    alert("User, status, or query type information missing. Please login again.");
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                 // Determine room number based on queryType
+                 // Ensure room numbers are stored correctly in localStorage from previous steps
+                if (queryType === "red") {
+                    roomno = localStorage.getItem("redroomno");
+                } else if (queryType === "kp") {
+                    roomno = localStorage.getItem("kproomno");
+                } else if (queryType === "hostel") {
+                     // For hostellers, use the room number stored directly in the user object
+                     roomno = user.roomno;
+                 }
+
+
+                if (!roomno) {
+                    alert("Room information could not be determined. Please go back and ensure room details are selected/available.");
+                     // Consider redirecting to a more appropriate previous step if possible
+                     // window.history.back();
+                    return;
+                }
+
+                if (!description) {
+                    alert("Please describe the issue.");
+                    issueDescriptionInput.focus(); // Focus the description field
+                    return;
+                }
+
+                if (!storedAppliances || !Array.isArray(storedAppliances) || storedAppliances.length === 0) {
+                    alert("No appliances selected to report. Please go back and select appliances.");
+                    return;
+                }
+                // Re-validate appliance data just before submission
+                const invalidAppliance = storedAppliances.find(app => typeof app.appliance_id === 'undefined' || app.appliance_id === null || typeof app.count === 'undefined' || app.count <= 0);
+                if (invalidAppliance) {
+                    alert("Invalid appliance data detected. Please go back and re-select appliances.");
+                    return;
+                }
+
+                // Prepare payload for the server
+                const applianceListPayload = storedAppliances.map((appliance) => ({
+                    appliance_id: appliance.appliance_id,
+                    count: appliance.count
+                }));
+
+                // --- API Call ---
+                try {
+                    // Disable buttons during submission
+                    if (submitButton) submitButton.disabled = true;
+                    if (changeAppliancesButton) changeAppliancesButton.disabled = true;
+                    submitButton.textContent = 'Submitting...'; // Provide visual feedback
+
+                    const response = await fetch("/submitQuery", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                         credentials: 'include', // Include cookies if login relies on sessions
+                        body: JSON.stringify({
+                            rollno: user.rollno,
+                            roomno: roomno,
+                            description: description,
+                            appliances: applianceListPayload,
+                            queryType: queryType // Send queryType if backend needs it
+                        })
+                    });
+
+                    const data = await response.json().catch(() => null); // Handle cases where response might not be JSON
+
+                    console.log("Server Response:", data);
+                    console.log("Response Status:", response.status);
+
+                    // --- Handle Response ---
+                    if (response.ok && data && data.success) {
+                         // Query submitted successfully
+                         console.log("Query submitted successfully. Server data:", data);
+
+                         // Update user data in localStorage if backend sends it back
+                         if (data.user) {
+                             localStorage.setItem("user", JSON.stringify(data.user));
+                             console.log("Updated user data in localStorage.");
+                         }
+
+                         // Clear temporary query data from localStorage
+                         localStorage.removeItem("appliances");
+                         localStorage.removeItem("queryType");
+                         localStorage.removeItem("redroomno");
+                         localStorage.removeItem("kproomno");
+
+                         alert("Query submitted successfully!"); // Show success message
+
+                         // ***** CORRECTED REDIRECTION LOGIC *****
+                         console.log(`Redirecting based on residing status: ${user.residing_status}`);
+                         if (user.residing_status === "Hosteller") {
+                             window.location.href = 'Homepage.html'; // Redirect Hostellers
+                         } else {
+                             window.location.href = 'Homepage1.html'; // Redirect Day Scholars
+                         }
+                         // ***** END OF CORRECTION *****
+
+                    } else {
+                         // Handle submission failure (API error, validation error, duplicate, etc.)
+                         let alertMessage = `Failed to submit query: ${data?.message || `Server responded with status ${response.status}`}`;
+                         console.error("Query submission failed:", alertMessage);
+                         // Specific handling for known statuses (like duplicates)
+                         if (response.status === 409) { // Conflict (e.g., duplicate)
+                             alertMessage = data?.message || "This query might be a duplicate of a recent submission.";
+                         } else if (response.status === 400) { // Bad Request (e.g., validation)
+                             alertMessage = data?.message || "Invalid data submitted. Please check your input.";
+                         }
+                         alert(alertMessage);
+                         // Re-enable buttons on failure
+                         if (submitButton) submitButton.disabled = false;
+                         if (changeAppliancesButton) changeAppliancesButton.disabled = false;
+                         submitButton.textContent = 'Submit Query';
+
+                    }
+                } catch (error) {
+                     // Handle network errors or issues with the fetch itself
+                    console.error("Network or fetch error submitting query:", error);
+                    alert("An error occurred while trying to submit the query. Please check your network connection or try again later.");
+                    // Re-enable buttons on fetch error
+                    if (submitButton) submitButton.disabled = false;
+                    if (changeAppliancesButton) changeAppliancesButton.disabled = false;
+                    submitButton.textContent = 'Submit Query';
+                }
+            });
+        } else {
+            console.error("Form with ID 'queryForm' not found.");
+        }
+
+        // --- Back Button Logic ---
+        if (changeAppliancesButton) {
+            changeAppliancesButton.addEventListener('click', () => {
+                window.history.back(); // Go back to the previous page (appliance selection)
+            });
+        } else {
+            console.error("Button with ID 'changeAppliancesButton' not found.");
+        }
+
+        // --- Dynamic Home Link Logic ---
+        const homeLink = document.querySelector(".home-link");
+        // Get user data *once* for the home link setup
+        const currentUserForHomeLink = JSON.parse(localStorage.getItem("user"));
+
+        if (homeLink && currentUserForHomeLink) {
+             homeLink.addEventListener("click", function(event) {
+                 event.preventDefault(); // Prevent default link behavior
+                 console.log(`Home link clicked. User status: ${currentUserForHomeLink.residing_status}`);
+                 if (currentUserForHomeLink.residing_status === "Hosteller") {
+                     window.location.href = "Homepage.html";
+                 } else {
+                     window.location.href = "Homepage1.html";
+                 }
+             });
+        } else if (!homeLink) {
+            console.error("Home link (.home-link) not found");
+        } else {
+            console.warn("User data not found in localStorage for setting up home link initially.");
+            // Optional: Fallback behavior for home link if user data is missing
+             homeLink.href = "login.html"; // Or a default homepage
+        }
+
+    }); // End DOMContentLoaded
+
+    // Function to toggle hamburger menu (ensure CSS supports .active or .show)
+    function toggleMenu() {
+        const navLinks = document.querySelector('.nav-links');
+        if (navLinks) {
+            navLinks.classList.toggle('show'); // Use 'show' or 'active' based on your CSS
+        }
+    }
+
+    // Logout Function (ensure this matches backend and clears necessary storage)
+    async function logout() {
+         console.log("Logout initiated...");
+         try {
+             await fetch('/logout', { // Don't necessarily need the response if just invalidating session
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 credentials: 'include'
+             });
+             console.log("Logout request sent.");
+         } catch (error) {
+              console.error('Error sending logout request:', error);
+              // Proceed with client-side logout anyway
+         } finally {
+              // Always clear client-side data and redirect
+              console.log("Clearing local user data...");
+              localStorage.clear(); // Clear all local storage for this domain
+              sessionStorage.clear(); // Clear all session storage
+              window.location.href = 'login.html';
+         }
+    }
+</script>
+</body>
+</html>

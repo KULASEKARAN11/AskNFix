@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Queries - AskNFix</title> <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="Pending_queries.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <div style="margin-top: 100px; margin-bottom: 100px;" class="pending-queries-container"> 
+        <h2 style="margin-bottom: 50px;">Completed Queries</h2> 
+        <h3>KP Queries</h3>
+        <ul class="query-list" id="kpQueriesList">
+            <li>Loading completed KP queries...</li>
+        </ul>
+
+        <h3 style="margin-top: 30px;">Red Building Queries</h3>
+        <ul class="query-list" id="redBuildingQueriesList">
+            <li>Loading completed Red Building queries...</li>
+        </ul>
+
+        <h3 style="margin-top: 30px;">Hostel Queries</h3>
+        <ul class="query-list" id="hostelQueriesList">
+            <li>Loading completed Hostel queries...</li>
+        </ul>
+    </div>
+
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <hr>
+        <p>AskNFix is an innovative web application designed to streamline record-keeping and issue resolution for students and administrators. Whether it’s managing hostel accommodations, college records, or tracking KP appliances, this platform ensures seamless operations and effective communication.</p>
+        <p style="margin-top: 10px;">AskNFix &copy; 2025</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+
+        // --- Dynamic Home Link Logic (same as raiseQuery page) ---
+        function setupHomeLink() {
+             const homeLink = document.querySelector(".home-link");
+             // Get user data from localStorage - requires user data to be stored on login
+             const user = JSON.parse(localStorage.getItem("user"));
+
+             if (homeLink && user) {
+                  homeLink.addEventListener("click", function(event) {
+                      event.preventDefault();
+                      console.log(`Home link clicked. User status: ${user.residing_status}`);
+                      if (user.residing_status === "Hosteller") {
+                          window.location.href = "Homepage.html";
+                      } else {
+                          window.location.href = "Homepage1.html";
+                      }
+                  });
+             } else if (!homeLink) {
+                 console.error("Home link (.home-link) not found");
+             } else {
+                  console.warn("User data not found in localStorage for setting up home link.");
+                  // Optional: Fallback behavior
+                  homeLink.href = "login.html";
+             }
+        }
+        // --- End Home Link Logic ---
+
+
+        // --- Logout Function (same as other pages) ---
+        async function logout() {
+            try {
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+            } catch (error) {
+                 console.error('Error sending logout request:', error);
+            } finally {
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 window.location.href = 'login.html';
+            }
+        }
+        // --- End Logout Function ---
+
+
+        // --- Fetch and Display Completed Queries ---
+        async function fetchCompletedQueries() {
+            const kpQueriesList = document.getElementById('kpQueriesList');
+            const redBuildingQueriesList = document.getElementById('redBuildingQueriesList');
+            const hostelQueriesList = document.getElementById('hostelQueriesList');
+
+            const setMessage = (listElement, message) => {
+                if (listElement) listElement.innerHTML = `<li>${message}</li>`;
+            };
+
+            setMessage(kpQueriesList, 'Loading completed KP queries...');
+            setMessage(redBuildingQueriesList, 'Loading completed Red Building queries...');
+            setMessage(hostelQueriesList, 'Loading completed Hostel queries...');
+
+            try {
+                // Fetch from the new API endpoint
+                const response = await fetch('http://localhost:3000/api/completed-queries', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send session cookie
+                });
+
+                if (response.status === 401) {
+                     console.log("Unauthorized: Redirecting to login.");
+                     alert("Please log in to view completed queries.");
+                     window.location.href = 'login.html';
+                     return;
+                }
+                if (!response.ok) {
+                    const errorText = `Error ${response.status}: Could not fetch completed queries.`;
+                    throw new Error(errorText); // Throw error to be caught below
+                }
+
+                const data = await response.json();
+                console.log("Completed queries data received:", data);
+
+                // Clear lists
+                if (kpQueriesList) kpQueriesList.innerHTML = '';
+                if (redBuildingQueriesList) redBuildingQueriesList.innerHTML = '';
+                if (hostelQueriesList) hostelQueriesList.innerHTML = '';
+
+                if (data && data.success && Array.isArray(data.completedQueries)) {
+                    console.log("Processing completed queries array:", data.completedQueries);
+
+                    const kpQueries = [];
+                    const redBuildingQueries = [];
+                    const hostelQueries = [];
+
+                    // Categorize based on block ID
+                    data.completedQueries.forEach(query => {
+                        const blockId = query.room ? query.room.block_id : null;
+                        if (blockId === 4) kpQueries.push(query);
+                        else if (blockId === 3) redBuildingQueries.push(query);
+                        else if (blockId === 1 || blockId === 2 || blockId === null || typeof blockId === 'undefined') hostelQueries.push(query);
+                        else console.warn("Query with unexpected block ID:", query);
+                    });
+
+                    // --- Function to display COMPLETED queries ---
+                    function displayCompletedQueries(queries, listElement) {
+                        if (!listElement) return;
+                        if (queries.length > 0) {
+                            queries.forEach(query => {
+                                const listItem = document.createElement('li');
+                                listItem.classList.add('query-item', 'completed'); // Add 'completed' class for potential styling
+
+                                // --- Format Dates & Times ---
+                                const raisedDate = query.raised_date ? new Date(query.raised_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+                                const raisedTime = query.raised_time ? query.raised_time.substring(0, 5) : 'N/A';
+                                const completedDate = query.completed_date ? new Date(query.completed_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+                                const completedTime = query.completed_time ? query.completed_time.substring(0, 5) : 'N/A';
+
+                                // --- Construct List Item HTML ---
+                                listItem.innerHTML = `
+                                    <strong>Query ID:</strong> ${query.Query_id}<br>
+                                    <strong>Room No:</strong> ${query.room?.roomno || 'N/A'}<br> <strong>Original Description:</strong> ${query.original_description || 'N/A'}<br>
+                                    <strong>Raised:</strong> ${raisedDate} at ${raisedTime}<br>
+                                    <hr style="margin: 5px 0;"> <strong>Status:</strong> ${query.status || 'N/A'}<br>
+                                    <strong>Completion Note:</strong> ${query.completion_description || 'N/A'}<br>
+                                    <strong>Completed By:</strong> ${query.completed_by_staff_name || 'N/A'}<br>
+                                    <strong>Completed:</strong> ${completedDate} at ${completedTime}<br>
+                                `; // Removed appliance list for completed view
+                                listElement.appendChild(listItem);
+                            });
+                        } else {
+                            listElement.innerHTML = '<li>No completed queries found.</li>';
+                        }
+                    }
+
+                    // Populate the lists
+                    displayCompletedQueries(kpQueries, kpQueriesList);
+                    displayCompletedQueries(redBuildingQueries, redBuildingQueriesList);
+                    displayCompletedQueries(hostelQueries, hostelQueriesList);
+
+                } else if (data && !data.success) {
+                     throw new Error(data.message || 'API reported failure fetching completed queries.');
+                } else {
+                    throw new Error('Invalid data format received for completed queries.');
+                }
+
+            } catch (error) {
+                console.error('Error fetching or processing completed queries:', error);
+                const errorText = `Error: ${error.message || 'Could not load completed queries.'}`;
+                 setMessage(kpQueriesList, errorText);
+                 setMessage(redBuildingQueriesList, errorText);
+                 setMessage(hostelQueriesList, errorText);
+            }
+        }
+
+        // --- Initialization ---
+        // Setup dynamic home link and fetch queries on page load
+        document.addEventListener('DOMContentLoaded', () => {
+             setupHomeLink(); // Set up the home link based on user status
+             fetchCompletedQueries(); // Fetch the completed queries
+        });
+
+    </script>
+
+</body>
+</html>

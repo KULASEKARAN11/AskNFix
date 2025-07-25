@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="staff_dashboard.css"> <!-- Make sure this CSS file exists -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com" target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li> <!-- Uses the JS function -->
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="dashboard-container">
+            <!-- Removed redundant logout button -->
+            <h1>Staff Dashboard</h1>
+            <hr>
+
+            <div class="user-info">
+                <h2>Welcome, <span id="staff-name">Loading...</span>!</h2>
+                <p><strong>Staff ID:</strong> <span id="staff-id">Loading...</span></p>
+                <p><strong>Role:</strong> <span id="staff-role">Loading...</span></p>
+            </div>
+
+            <div class="clear"></div>
+            <div class="action-button-container">
+                <!-- Modified onclick to call a function -->
+                <button style="margin-right: 20px;" type="button" id="viewQueriesButton" class="action-button" onclick="navigateToQueries()">
+                    View Queries <!-- Text will be updated by JS -->
+                </button>
+                <button style="margin-left: 20px;" type="button" id="viewCompletedQueriesButton" class="action-button" style="display: none;" onclick="navigateToCompletedQueries()">
+                    View Completed Queries
+                </button>
+                <!-- Add other action buttons here as needed -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Contact us: support@asknfix147@gmail.com | Phone: +123 456 7890</p>
+        <p>AskNFix © 2024</p> <!-- Update year if needed -->
+    </footer>
+
+    <script>
+        // Element references
+        // Element references
+        const staffNameElement = document.getElementById('staff-name');
+        const staffIdElement = document.getElementById('staff-id');
+        const staffRoleElement = document.getElementById('staff-role');
+        const viewQueriesButton = document.getElementById('viewQueriesButton'); // Get the button element
+        const viewCompletedQueriesButton = document.getElementById('viewCompletedQueriesButton'); // Get the new button element
+        let currentUserRole = null; // Variable to store the user's role globally on this page
+
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            if (navLinks) {
+                navLinks.classList.toggle("show");
+            }
+        }
+
+        // Function to fetch logged-in staff user data
+        async function fetchUserData() {
+            console.log("Fetching user data...");
+            try {
+                // Fetch user data from the server endpoint
+                const response = await fetch('/user'); // Ensure this endpoint is configured server-side
+
+                if (!response.ok) {
+                    // Handle HTTP errors (like 401 Unauthorized, 403 Forbidden, 500 Internal Server Error)
+                    console.error(`HTTP error! status: ${response.status}`);
+                    // Redirect to login if not authorized or session expired
+                    if (response.status === 401 || response.status === 403) {
+                         console.log("Unauthorized or Forbidden access. Redirecting to staff login.");
+                         window.location.href = 'stafflogin.html';
+                    } else {
+                        // Other server error
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    return; // Stop further processing
+                }
+
+                const result = await response.json();
+                console.log("User data received:", result);
+
+                // Check if the request was successful and user data exists and is of type 'staff'
+                if (result.success && result.user && result.user.type === 'staff') {
+                    staffNameElement.textContent = result.user.name || 'N/A';
+                    staffIdElement.textContent = result.user.id || 'N/A';
+                    currentUserRole = result.user.role || 'N/A'; // Store the role
+                    staffRoleElement.textContent = currentUserRole;
+
+                    // Update button text based on role
+                    if (viewQueriesButton) {
+                        if (currentUserRole === "Executive Warden" || currentUserRole === "College Maintenance Staff Head") {
+                            viewQueriesButton.textContent = "View & Assign Queries"; // Updated text
+                        }
+                        // Show/hide the completed queries button
+                        if (viewCompletedQueriesButton) {
+                            if (currentUserRole === "Executive Warden" || currentUserRole === "College Maintenance Staff Head") {
+                                viewCompletedQueriesButton.style.display = 'inline-block'; // Show the button
+                            } else {
+                                viewCompletedQueriesButton.style.display = 'none'; // Keep it hidden for others
+                            }
+                        } else {
+                             console.error("Could not find the viewCompletedQueriesButton element.");
+                        }
+                    } else {
+                        console.error("Could not find the viewQueriesButton element.");
+                    }
+
+
+                } else {
+                    // Handle cases where user is not staff, not logged in, or server returned success=false
+                    console.warn('User not logged in as staff or error fetching data:', result.message || 'No staff user data found.');
+                    // Redirect non-staff/logged-out users to the staff login page
+                    window.location.href = 'stafflogin.html';
+                }
+            } catch (error) {
+                console.error('Failed to fetch user data:', error);
+                staffNameElement.textContent = 'Error';
+                staffIdElement.textContent = 'Error';
+                staffRoleElement.textContent = 'Error';
+                // Optional: Redirect on critical error after a short delay
+                // alert("Failed to load user data. Redirecting to login.");
+                // setTimeout(() => { window.location.href = 'stafflogin.html'; }, 2000);
+            }
+        }
+
+        // Function to handle user logout (called by header link)
+        async function handleLogout() {
+             console.log("handleLogout called from staff dashboard");
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Important for session/cookie based logout
+                 });
+
+                 if (!response.ok) {
+                    // Even if server logout fails, proceed with client-side cleanup
+                    console.error(`Logout request failed with status: ${response.status}`);
+                 }
+                 const result = await response.json().catch(() => ({})); // Attempt to parse JSON, default to empty object on failure
+
+                console.log('Logout server response:', result); // Log response even if not fully successful
+
+            } catch (error) {
+                console.error('Logout request failed:', error);
+                // Proceed with client-side cleanup despite error
+            } finally {
+                 // Clear client-side storage and redirect
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 window.location.href = 'stafflogin.html'; // Redirect specifically to staff login
+            }
+        }
+
+        // NEW Function to navigate based on role
+        function navigateToQueries() {
+            if (!currentUserRole) {
+                console.error("User role not determined yet. Cannot navigate.");
+                alert("Could not determine user role. Please try refreshing.");
+                return;
+            }
+
+            if (currentUserRole === "Executive Warden" || currentUserRole === "College Maintenance Staff Head") {
+                window.location.href = 'assign_queries.html'; // Page for assigning
+            } else {
+                window.location.href = 'my_assigned_queries.html'; // Page for viewing assigned
+            }
+        }
+
+        // NEW Function to navigate to completed queries page
+        function navigateToCompletedQueries() {
+            window.location.href = 'completedqueriesstaff.html';
+        }
+
+        // Fetch user data when the page loads
+        document.addEventListener('DOMContentLoaded', fetchUserData);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    background-image: url("./images/background.png");
+    background-size: 100vw 250vh;
+    min-height: 100vh;
+    background-position: bottom;
+}
+a{
+    text-decoration: none;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+main {
+    flex: 1;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    margin-top: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        background: black;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 150px;
+        padding: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .hamburger {
+        display: block;
+    }
+}
+#applianceList li {
+    display: grid;
+    grid-template-columns: 300px 30px 30px 30px;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0px;
+}
+
+
+
+#applianceList li button {
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        padding: 0;
+        font-size: 20px;
+        
+       
+        border: none;
+        cursor: pointer;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+}
+
+#applianceList li input {
+    height:22px;
+    width: 30px;
+    padding: 0;
+    color: rgba(0, 0, 0,0.6);
+    border-radius: 2px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: none;
+    font-weight: bold;
+}
+
+button {
+    background-color: #d9a7c7; 
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background-color: #b48aae;
+    transform: scale(1.05);
+}
+
+button:active {
+    background-color: #884888;
+    transform: scale(0.98);
+}

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Assigned Queries - AskNFix</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="view_queries.css"> <!-- Changed CSS link -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Removed inline style block -->
+</head>
+<body>
+
+    <!-- Header copied from view_queries.html -->
+    <header>
+        <div class="logo">AskNFix</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="staff_dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=asknfix147@gmail.com"
+                       target="_blank">Contact</a></li>
+                <li><a href="#" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">☰</div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Using the same container class as view_queries.html -->
+        <div class="container">
+            <h1>My Assigned Queries</h1>
+            <!-- Removed hr, styling handled by CSS -->
+            <div id="assigned-queries-list" class="queries-container"> <!-- Added class for styling -->
+                <p class="loading-message">Loading your assigned queries...</p>
+                <!-- Assigned queries will be loaded here -->
+            </div>
+             <div class="clear"></div> <!-- Added clear div like in view_queries -->
+        </div>
+
+        <!-- Modal copied from view_queries.html -->
+        <div id="description-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Enter Completion Description</h2>
+                <textarea id="description-text" rows="4" cols="50" placeholder="Describe the action taken to resolve the query..."></textarea>
+                <button id="modal-mark-done-button">Mark as Done</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer copied from view_queries.html -->
+    <footer>
+        <p>Contact us: support@asknfix.com | Phone: +123 456 7890</p>
+        <p>AskNFix &copy; 2025</p>
+    </footer>
+
+    <script>
+        const assignedQueriesListDiv = document.getElementById('assigned-queries-list');
+
+        // Function to toggle responsive navigation menu
+        function toggleMenu() {
+            const navLinks = document.querySelector(".nav-links");
+            navLinks?.classList.toggle("show");
+        }
+
+        // Function to format date and time nicely
+        function formatDateTime(dateStr, timeStr) {
+             if (!dateStr) return 'N/A';
+            try {
+                const date = new Date(dateStr);
+                 if (timeStr) {
+                    const timeParts = timeStr.split(':');
+                    if (timeParts.length === 3) {
+                        date.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), parseInt(timeParts[2], 10));
+                    }
+                }
+                return date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            } catch (e) {
+                console.error("Error formatting date/time:", e);
+                return `${dateStr} ${timeStr || ''}`.trim();
+            }
+        }
+
+        // Function to display assigned queries
+        function displayAssignedQueries(queries) {
+            assignedQueriesListDiv.innerHTML = ''; // Clear loading message
+            if (!queries || queries.length === 0) {
+                // Use class from view_queries.css for consistency
+                assignedQueriesListDiv.innerHTML = '<p class="loading-message">You have no pending assigned queries.</p>';
+                return;
+            }
+
+            queries.forEach(query => {
+                const queryCard = document.createElement('div');
+                // Use class name from view_queries.css
+                queryCard.className = 'query-item';
+
+                let appliancesHtml = 'None specified'; // Match text from view_queries
+                if (query.appliances && query.appliances.length > 0) {
+                    appliancesHtml = `<ul>${query.appliances.map(app => `<li>${app.name} (Count: ${app.count})</li>`).join('')}</ul>`;
+                }
+
+                 // Determine block type
+                let blockType = 'Unknown';
+                if (query.blockId === 1 || query.blockId === 2) blockType = 'Hostel';
+                else if (query.blockId === 3 || query.blockId === 4) blockType = 'Academic/College';
+
+                queryCard.innerHTML = `
+                    <h3>Query #${query.queryId} - Room ${query.roomNo} (${blockType})</h3>
+                    <p><strong>Reported By:</strong> ${query.reportedBy || 'N/A'}</p>
+                    <p><strong>Raised:</strong> ${formatDateTime(query.raisedDate, query.raisedTime)}</p>
+                    <p><strong>Assigned:</strong> ${formatDateTime(query.assignedDate, query.assignedTime)}</p>
+                    <p><strong>Description:</strong> ${query.description}</p>
+                    <p><strong>Appliances:</strong></p>
+                    ${appliancesHtml}
+                    <p><strong>Status:</strong> <span class="status-pending">Pending</span></p>
+                    <button class="mark-done-button" data-query-id="${query.queryId}">Mark as Done</button>
+                `;
+                // Append to the container with the correct class
+                assignedQueriesListDiv.appendChild(queryCard);
+            });
+
+            // Add event listeners AFTER appending all cards
+            attachMarkDoneListeners();
+        }
+
+        // Function to attach listeners to Mark as Done buttons
+        function attachMarkDoneListeners() {
+            const buttons = assignedQueriesListDiv.querySelectorAll('.mark-done-button');
+            buttons.forEach(button => {
+                // Remove existing listener to prevent duplicates if called multiple times
+                button.replaceWith(button.cloneNode(true));
+            });
+            // Re-query buttons after cloning
+            assignedQueriesListDiv.querySelectorAll('.mark-done-button').forEach(button => {
+                 button.addEventListener('click', (event) => {
+                    const queryId = event.target.dataset.queryId;
+                    handleMarkAsDone(queryId, event.target); // Pass button for disabling
+                });
+            });
+        }
+
+
+        // Function to fetch assigned queries for the logged-in staff
+        async function fetchMyAssignedQueries() {
+            try {
+                const response = await fetch('/api/my-assigned-queries');
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = 'stafflogin.html'; // Redirect if not authorized
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    displayAssignedQueries(result.queries);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch assigned queries.');
+                }
+            } catch (error) {
+                console.error('Error fetching assigned queries:', error);
+                assignedQueriesListDiv.innerHTML = `<p class="error-message">Error loading your queries: ${error.message}. Please try again later.</p>`;
+            }
+        }
+
+        // Function to handle user logout (using view_queries.html version)
+        async function handleLogout() {
+            console.log("handleLogout called from my_assigned_queries");
+             try {
+                const response = await fetch('/logout', { // Assuming /logout endpoint exists
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Send cookies if needed
+                });
+
+                if (response.ok) {
+                     const result = await response.json().catch(() => ({}));
+                     console.log("Server logout successful or handled.");
+                } else {
+                     console.warn(`Logout request failed with status: ${response.status}`);
+                }
+
+                 localStorage.clear(); // Clear local storage
+                 sessionStorage.clear(); // Clear session storage
+                 window.location.href = '/stafflogin.html'; // Redirect to staff login
+
+            } catch (error) {
+                console.error('Error during logout fetch operation:', error);
+                 localStorage.clear();
+                 sessionStorage.clear();
+                 alert('An error occurred during logout. Redirecting to login.');
+                 window.location.href = '/stafflogin.html';
+            }
+        }
+
+        // --- Modal Handling Logic (adapted from view_queries.html) ---
+        function handleMarkAsDone(queryId, buttonElement) {
+            console.log(`Modal requested for marking assigned query ${queryId} as done.`);
+
+            const modal = document.getElementById("description-modal");
+            const closeBtn = modal.querySelector(".close");
+            const modalMarkDoneButton = document.getElementById("modal-mark-done-button");
+            const descriptionText = document.getElementById("description-text");
+
+            // Clear previous description and set current query ID reference
+            descriptionText.value = '';
+            modal.setAttribute('data-current-query-id', queryId); // Store ID on modal
+
+            // Open the modal
+            modal.style.display = "block";
+
+            // Detach previous handlers before attaching new ones
+            const newModalMarkDoneButton = modalMarkDoneButton.cloneNode(true);
+            modalMarkDoneButton.parentNode.replaceChild(newModalMarkDoneButton, modalMarkDoneButton);
+
+            // --- Event Handlers for Modal ---
+            const closeModalHandler = () => {
+                 modal.style.display = "none";
+                 if (buttonElement) { // Re-enable the original button if it exists
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = 'Mark as Done';
+                 }
+                 window.removeEventListener('click', outsideClickHandler);
+            };
+            closeBtn.onclick = closeModalHandler;
+
+            const outsideClickHandler = (event) => {
+                if (event.target == modal) {
+                   closeModalHandler();
+                }
+            };
+            window.addEventListener('click', outsideClickHandler);
+
+            // "Mark as Done" button inside the modal action
+             newModalMarkDoneButton.onclick = async () => {
+                 const currentQueryId = modal.getAttribute('data-current-query-id');
+                 const description = descriptionText.value.trim();
+
+                 if (description === "") {
+                     alert("Completion description cannot be empty.");
+                     return;
+                 }
+
+                 newModalMarkDoneButton.disabled = true;
+                 newModalMarkDoneButton.textContent = 'Processing...';
+
+                 try {
+                     console.log(`Submitting completion for assigned query ${currentQueryId}`);
+                     // *** Use the NEW endpoint ***
+                     const response = await fetch(`/api/assigned-queries/${currentQueryId}/complete`, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         credentials: 'include',
+                         body: JSON.stringify({ description: description })
+                     });
+
+                     if (!response.ok) {
+                         let errorMsg = `Failed to update. Status: ${response.status}`;
+                         try { const errData = await response.json(); errorMsg = `${errorMsg} - ${errData.message || 'Server error'}`; } catch (e) {}
+                         throw new Error(errorMsg);
+                     }
+
+                     const result = await response.json();
+
+                     if (result.success) {
+                         console.log(`Assigned query ${currentQueryId} successfully marked as done.`);
+                         alert(`Query ${currentQueryId} marked as done.`);
+                         closeModalHandler();
+
+                         // Remove the query item from the UI
+                         const queryItemElement = document.querySelector(`.query-item[data-query-id="${currentQueryId}"]`);
+                         if (queryItemElement) {
+                             queryItemElement.style.opacity = '0';
+                             queryItemElement.style.transition = 'opacity 0.5s ease-out, max-height 0.5s ease-out';
+                             queryItemElement.style.maxHeight = '0';
+                             queryItemElement.style.padding = '0';
+                             queryItemElement.style.margin = '0';
+                             queryItemElement.style.border = 'none';
+                             setTimeout(() => {
+                                 queryItemElement.remove();
+                                 if (assignedQueriesListDiv && assignedQueriesListDiv.children.length === 0) {
+                                     assignedQueriesListDiv.innerHTML = '<p class="loading-message">You have no pending assigned queries.</p>';
+                                 }
+                             }, 500);
+                         } else {
+                             fetchMyAssignedQueries(); // Fallback refresh
+                         }
+                     } else {
+                         throw new Error(result.message || 'API reported failure.');
+                     }
+
+                 } catch (error) {
+                     console.error(`Error marking assigned query ${currentQueryId} as done:`, error);
+                     alert(`Failed to mark query as done: ${error.message}`);
+                     if (buttonElement) { // Re-enable original button on error
+                        buttonElement.disabled = false;
+                        buttonElement.textContent = 'Mark as Done';
+                     }
+                 } finally {
+                     newModalMarkDoneButton.disabled = false;
+                     newModalMarkDoneButton.textContent = 'Mark as Done';
+                 }
+             };
+        } // End of handleMarkAsDone
+
+        // Initial fetch of assigned queries when the page loads
+        document.addEventListener('DOMContentLoaded', fetchMyAssignedQueries);
+
+    </script>
+
+</body>
+</html>

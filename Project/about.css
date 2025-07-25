@@ -1,0 +1,251 @@
+
+/* --- Global Styles & Body --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: #333; /* Default text color for content */
+    background-image: url('./images/background.png');
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    /* Remove body padding to allow header/footer full width */
+    /* padding: 20px 0; */
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack header, content, footer */
+}
+
+/* --- Copied/Adapted Header Styles --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(110, 62, 62, 0.3); /* Darker semi-transparent background for contrast */
+    padding: 15px 30px; /* Adjusted padding */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: white; /* Default text color for header */
+    position: sticky; /* Make header sticky */
+    top: 0;
+    z-index: 1000; /* Ensure header stays on top */
+    width: 100%;
+}
+
+header .logo { /* Target logo specifically within header */
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ddd; /* Lighter gray on hover */
+}
+
+.hamburger {
+    display: none; /* Hidden by default */
+    font-size: 24px;
+    cursor: pointer;
+    color: white; /* Ensure hamburger is visible */
+}
+
+/* --- Content Container (Specific to About Page Content) --- */
+.content-container {
+    flex-grow: 1; /* Allow content to take available space */
+    max-width: 1200px;
+    margin: 40px auto; /* Center horizontally, add space top/bottom */
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    color: #333; /* Reset text color for content inside container */
+}
+
+/* --- Header WITHIN Content Container --- */
+.about-header-content { /* Renamed class */
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.about-header-content h1 { /* Target H1 within content specifically */
+    font-size: 2.5em;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.logo-image {
+    display: block;
+    width: 120px;
+    margin-right: 20px;
+    max-width: 100%;
+    height: auto;
+    border: 3px solid #4CAF50;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.intro-text {
+    font-size: 1.1em;
+    color: #555;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: justify; /* Justify text for better block look */
+}
+
+/* --- Scope Section --- */
+.scope-section {
+    margin-bottom: 30px;
+}
+
+.scope-section h2 { /* Target H2 within scope section */
+    font-size: 1.8em;
+    color: #34495e;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #4CAF50;
+    display: inline-block;
+}
+
+.scope-text {
+    font-size: 1em;
+    color: #444;
+    text-align: justify;
+}
+
+/* --- Separator --- */
+.separator {
+    border: none;
+    height: 1px;
+    background-color: #ddd;
+    margin: 30px 0;
+}
+
+/* --- Developers Section --- */
+.developers-section {
+    margin-bottom: 20px;
+}
+
+.developers-section h3 { /* Target H3 within developers section */
+    font-size: 1.4em;
+    color: #34495e;
+    margin-bottom: 10px;
+}
+
+.developers-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.developers-section li {
+    font-size: 1em;
+    color: #444;
+    padding: 3px 0;
+}
+
+/* --- Copied/Adapted Footer Styles --- */
+footer {
+    text-align: center;
+    padding: 15px 20px; /* Increased padding slightly */
+    background: rgba(0, 0, 0, 0.3); /* Match header background */
+    color: white;
+    margin-top: auto; /* Push footer to bottom in flex container */
+    width: 100%;
+}
+footer hr {
+    border: none;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2); /* Subtle separator */
+    margin: 10px auto;
+    width: 80%;
+}
+footer p {
+    margin: 5px 0;
+    font-size: 0.9em;
+}
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    header {
+        padding: 10px 15px; /* Reduce header padding */
+    }
+
+    /* Styles for mobile navigation menu */
+    .nav-links {
+        display: none; /* Hide links by default */
+        flex-direction: column;
+        background: rgba(0, 0, 0, 0.8); /* Darker background for dropdown */
+        position: absolute;
+        top: 60px; /* Adjust based on header height */
+        right: 0;
+        width: 180px; /* Wider dropdown */
+        padding: 10px 0; /* Vertical padding */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 0 0 5px 5px;
+    }
+
+    .nav-links.show { /* This class is toggled by JS */
+        display: flex;
+    }
+
+    .nav-links li {
+        margin: 10px 15px; /* Adjust spacing in dropdown */
+        text-align: center;
+    }
+
+    .hamburger {
+        display: block; /* Show hamburger icon */
+    }
+
+    /* Adjust content container for smaller screens */
+    .content-container {
+        margin: 20px 15px; /* Reduce side margins */
+        padding: 20px;
+    }
+
+    h1, .about-header-content h1 { /* Target both H1s */
+        font-size: 2em;
+    }
+
+    h2, .scope-section h2 { /* Target both H2s */
+        font-size: 1.5em;
+    }
+
+    h3, .developers-section h3 { /* Target both H3s */
+        font-size: 1.2em;
+    }
+
+    .intro-text {
+        font-size: 1em;
+    }
+}

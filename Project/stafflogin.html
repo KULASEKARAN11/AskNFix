@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskNFix - Staff Login</title>
+    <link rel="icon" href="images/Logo.jpg">
+    <link rel="stylesheet" href="stafflogin.css"> <!-- Make sure this CSS file exists -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Styles for positioning input elements */
+        .input-group {
+            position: relative; /* Needed for absolute positioning of the icon */
+            margin-bottom: 15px;
+        }
+
+        /* Styles for the password toggle icon */
+        .password-toggle-icon {
+            position: absolute;
+            right: 10px;  /* Adjust as needed */
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            width: 20px;  /* Adjust size as needed */
+            height: auto; /* Maintain aspect ratio */
+            /* Optional: Add padding if icon feels too close to edge or text */
+             padding: 2px;
+        }
+
+        /* Original hover style for Staff button */
+        #staffbtn:hover {
+            background-color: #83c56f;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="login-box">
+            <div id="n1">
+                <div class="logo"><span style="font-weight: 600;">AskNFix</span></div>
+            </div>
+
+            <h2>Staff Login</h2>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <!-- Added an optional pattern - adjust regex if needed -->
+                    <input type="text" id="staffId" placeholder="Staff ID" required pattern=".*\S+.*" title="Staff ID cannot be empty or just spaces.">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                    <img src="images/closeeye.webp" alt="Show password" class="password-toggle-icon" id="toggleStaffPasswordIcon">
+                </div>
+                <p id="errorMessage" class="error-message"></p> <!-- Error message placeholder -->
+                <button type="submit">Login</button>
+            </form>
+
+            <!-- Changed to an anchor tag for better semantics, styled as button -->
+            <a href="login.html" id="staffbtn" class="back-button">Back to Student Login</a>
+
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const staffIdInput = document.getElementById('staffId');
+        const passwordInput_Login = document.getElementById('password');
+        const errorMessageElement = document.getElementById('errorMessage');
+        const togglePasswordIcon = document.getElementById('toggleStaffPasswordIcon');
+
+        // --- Login Form Submission ---
+        if (loginForm) {
+             loginForm.addEventListener('submit', async (event) => {
+                 event.preventDefault(); // Prevent default form submission
+                 errorMessageElement.style.display = 'none'; // Hide error message initially
+                 errorMessageElement.textContent = '';
+
+                 const staffId = staffIdInput.value.trim();
+                 const password = passwordInput_Login.value.trim();
+
+                 if (!staffId || !password) {
+                     errorMessageElement.textContent = 'Please enter both Staff ID and Password.';
+                     errorMessageElement.style.display = 'block';
+                     return;
+                 }
+
+                 try {
+                     const response = await fetch('/staff-login', { // Ensure this endpoint is correct
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ staffId, password }),
+                     });
+
+                     const result = await response.json();
+
+                     if (result.success && result.redirectTo) {
+                         console.log('Staff login successful, redirecting...');
+                         window.location.href = result.redirectTo; // Redirect to the path given by server
+                     } else {
+                         errorMessageElement.textContent = result.message || 'Login failed. Please check credentials.';
+                         errorMessageElement.style.display = 'block';
+                         // Clear password field on failed login for security
+                         passwordInput_Login.value = '';
+                     }
+                 } catch (error) {
+                     console.error('Login request failed:', error);
+                     errorMessageElement.textContent = 'An error occurred. Please try again later.';
+                     errorMessageElement.style.display = 'block';
+                 }
+             });
+        } else {
+             console.error("Login form not found!");
+        }
+
+        // --- Password Toggle Visibility ---
+        if (passwordInput_Login && togglePasswordIcon) {
+            togglePasswordIcon.addEventListener('click', function() {
+                const currentType = passwordInput_Login.getAttribute('type');
+                if (currentType === 'password') {
+                    passwordInput_Login.setAttribute('type', 'text');
+                    this.src = 'images/openeye.webp'; // Assume you have this image
+                    this.alt = 'Hide password';
+                } else {
+                    passwordInput_Login.setAttribute('type', 'password');
+                    this.src = 'images/closeeye.webp'; // Assume you have this image
+                    this.alt = 'Show password';
+                }
+            });
+        } else {
+            console.error("Could not find password input or toggle icon.");
+        }
+    </script>
+
+</body>
+</html>
